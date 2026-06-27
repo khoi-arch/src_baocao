@@ -42,7 +42,7 @@ import config as CFG
 
 
 _train_path = Path(__file__).resolve().with_name("07_train.py")
-_train_spec = importlib.util.spec_from_file_location("_dacn_05_train_helpers", _train_path)
+_train_spec = importlib.util.spec_from_file_location("_src_baocao_train_utils", _train_path)
 _train_mod = importlib.util.module_from_spec(_train_spec)
 assert _train_spec is not None and _train_spec.loader is not None
 _train_spec.loader.exec_module(_train_mod)
