@@ -1,5 +1,11 @@
 {
   "run_id": "D3",
+  "spec": {
+    "local": "offset_interpolation",
+    "continuous_source": "raw_scaled",
+    "fusion": "raw_film",
+    "description": "offset interpolation + raw FiLM/multiply fusion"
+  },
   "dataset_npz": "/home/pak/Documents/src_baocao/03_outputs/05_dataset/dataset.npz",
   "metadata_json": "/home/pak/Documents/src_baocao/03_outputs/05_dataset/metadata.json",
   "boundary_data_diagnostics": {
@@ -9,9 +15,12 @@
       "last_bin_id": 511,
       "n_rows": 46876,
       "n_features": 55,
+      "total_cells": 2578180,
       "last_bin_cells": 840,
       "last_bin_cell_ratio": 0.00032581123117858334,
       "features_with_last_bin": 29,
+      "max_feature_last_bin_ratio": 0.0037332536905879342,
+      "mean_feature_last_bin_ratio": 0.0003258112311785834,
       "top_features_by_last_bin_ratio": [
         {
           "feature": "pslist.avg_threads",
@@ -156,9 +165,12 @@
       "last_bin_id": 511,
       "n_rows": 11720,
       "n_features": 55,
+      "total_cells": 644600,
       "last_bin_cells": 201,
       "last_bin_cell_ratio": 0.00031182128451753024,
       "features_with_last_bin": 23,
+      "max_feature_last_bin_ratio": 0.0028156996587030718,
+      "mean_feature_last_bin_ratio": 0.00031182128451753024,
       "top_features_by_last_bin_ratio": [
         {
           "feature": "pslist.avg_threads",
@@ -300,22 +312,27 @@
   },
   "embedding_runtime_diagnostics": {
     "n_rows_checked": 2048,
-    "embedding_class": "D3OffsetFiLMEmbedding",
+    "has_local_interp": true,
+    "embedding_class": "D3InterpRawFiLMEmbedding",
     "offset_mean": 0.24145226180553436,
     "offset_std": 0.3092198371887207,
     "continuous_mean": 0.3124888241291046,
     "continuous_std": 0.3499418795108795,
     "continuous_mask_mean": 1.0,
-    "local_abs_mean": 0.014620862901210785,
-    "local_std": 0.018342817202210426,
-    "local_l2_mean_per_cell": 0.10218055546283722,
-    "last_bin_offset_sensitivity_l2": 0.14332865178585052,
+    "bin_embedding_num_embeddings": 513,
+    "bin_embedding_dim": 32,
+    "bin_embedding_weight_std": 0.02021166682243347,
+    "local_abs_mean": 0.014445976354181767,
+    "local_std": 0.018299000337719917,
+    "local_l2_mean_per_cell": 0.101909339427948,
+    "last_bin_offset_sensitivity_l2": 0.1304578334093094,
     "last_bin_boundary_collapse_fixed": true,
+    "continuous_abs_mean_over_local_abs_mean": 21.63154753044065,
     "film_gamma_abs_mean": 0.025239907205104828,
     "film_beta_abs_mean": 0.023858489468693733,
     "film_gate_mean": 0.5,
-    "film_delta_l2_mean_per_cell": 0.08550592511892319,
-    "film_delta_over_local_l2_mean": 0.8368120992454523
+    "film_delta_l2_mean_per_cell": 0.08564577251672745,
+    "film_delta_over_local_l2_mean": 0.8404114185950619
   },
   "continuous_info": {
     "source": "raw_scaled",
@@ -332,6 +349,9 @@
     "train_max": 1.0,
     "val_min": 0.0,
     "val_max": 1.0
+  },
+  "selective_info": {
+    "type": "none"
   },
   "data_shapes": {
     "X_train_bin": [

@@ -1,0 +1,29 @@
+{
+  "stage": "B0_wrong_top2_audit",
+  "created_at": "2026-06-28T01:03:40+07:00",
+  "repo_root": "/home/pak/Documents/src_baocao",
+  "pred_csv": "/home/pak/Documents/src_baocao/03_outputs/00_data_for_test/01_model/predictions/val_predictions.csv",
+  "out_dir": "/home/pak/Documents/src_baocao/05_test/outputs/B0_wrong_top2_audit",
+  "script": "/home/pak/Documents/src_baocao/05_test/B0_wrong_top2_audit.py",
+  "status": "failed",
+  "n_rows_loaded": 11720,
+  "columns": [
+    "sample_index",
+    "true_id",
+    "true_label",
+    "pred_id",
+    "pred_label",
+    "correct",
+    "confidence"
+  ],
+  "label_id_to_name_mapping_detected": {
+    "0": "Benign",
+    "1": "Ransomware",
+    "2": "Spyware",
+    "3": "Trojan"
+  },
+  "true_col": "true_label",
+  "pred_col": "pred_label",
+  "top2_source": "not_found",
+  "error": "Could not detect top-2 information. Need probability/logit/score columns or explicit top1/top2 label columns. Use --top1-col/--top2-col or --score-prefix."
+}
