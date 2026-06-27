@@ -54,14 +54,14 @@ def cfg(name: str, default):
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Train D0-D7 fusion ablations.")
+    p = argparse.ArgumentParser(description="Train official D3 C2/D3 model.")
 
-    p.add_argument("--run-id", choices=["D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7"], required=True)
+    p.add_argument("--run-id", choices=["D3"], default="D3")
     p.add_argument("--K", type=int, default=int(cfg("TOKEN_K", 1000)))
     p.add_argument("--num-bins", type=int, default=int(cfg("VALUE_NUM_BINS", 128)))
     p.add_argument("--dataset-npz", default="")
     p.add_argument("--metadata-json", default="")
-    p.add_argument("--out-root", default=str(cfg("OUTPUT_ROOT", Path("03_outputs")) / "train_runs_fusion_ablation_D0_D7"))
+    p.add_argument("--out-root", default=str(cfg("MODEL_DIR", cfg("OUTPUT_ROOT", Path("03_outputs")) / "01_model")))
     p.add_argument("--run-name", default="")
 
     p.add_argument("--train-raw", default="")
@@ -996,7 +996,7 @@ def make_diagnosis_summary(
     )[:10]
 
     return {
-        "phase": "Fusion ablation D0-D7 fixed K_effective",
+        "phase": "Official C2/D3 training",
         "run_id": args.run_id,
         "best_epoch": int(best_epoch),
         "representation": f"{args.run_id}_{spec['description']}",
@@ -1069,6 +1069,10 @@ def make_diagnosis_summary(
 
 def main() -> None:
     args = parse_args()
+
+    # Clean official pipeline: only D3 is supported here.
+    args.run_id = "D3"
+
     _train_mod.set_seed(int(args.seed))
 
     spec = RUN_SPECS[args.run_id]
@@ -1130,19 +1134,17 @@ def main() -> None:
     num_classes = int(len(label_names))
     n_features = int(meta["n_features"])
 
-    run_name = args.run_name
-    if not run_name:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        run_name = f"{timestamp}_{args.run_id}_{spec['local']}_{spec['fusion']}_Keff{B}_seed{args.seed}"
+    run_name = args.run_name or "D3_official"
 
-    out_dir = Path(args.out_root) / f"Keff{B}" / run_name
+    # Clean official pipeline: write directly to 03_outputs/01_model.
+    out_dir = Path(args.out_root)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     device = _train_mod.pick_device(str(args.device))
 
     config_obj = {
-        "stage": "train_fusion_ablation_D0_D7",
-        "phase": "fixed_K_representation_ablation",
+        "stage": "train_D3_official",
+        "phase": "official_C2D3_training",
         "run_id": args.run_id,
         "run_spec": spec,
         "K_artifact": K_artifact,
