@@ -67,10 +67,10 @@ VAL_RAW_CSV = SPLIT_DIR / "val_raw.csv"
 OUTPUT_ROOT = ROOT_DIR / "03_outputs"
 OUTPUT_DIR = OUTPUT_ROOT
 
-TOKEN_DIAG_DIR = OUTPUT_ROOT / "token_diag"
-PREPROCESS_DIR = OUTPUT_ROOT / "preprocessing"
-BIN_DIAG_DIR = OUTPUT_ROOT / "bin_diag"
-BUILD_ROOT = OUTPUT_ROOT / "build_mixed_quantile_offset"
+TOKEN_DIAG_DIR = OUTPUT_ROOT / "01_token_diag"
+PREPROCESS_DIR = OUTPUT_ROOT / "02_preprocessing"
+BIN_DIAG_DIR = OUTPUT_ROOT / "03_bin_diag"
+BUILD_ROOT = OUTPUT_ROOT / "04_token"
 
 DATASET_DIR = OUTPUT_ROOT / "00_dataset"
 MODEL_DIR = OUTPUT_ROOT / "01_model"

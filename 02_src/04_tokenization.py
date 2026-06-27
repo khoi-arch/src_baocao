@@ -40,7 +40,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--val-preprocessed", default="")
     p.add_argument("--policy-json", default="")
     p.add_argument("--diag-json", default="")
-    p.add_argument("--out-root", default=str(CFG.OUTPUT_ROOT / "build_mixed_quantile_offset"))
+    p.add_argument("--out-root", default=str(getattr(CFG, "BUILD_ROOT", CFG.OUTPUT_ROOT / "04_build_mixed_quantile_offset")))
     p.add_argument("--label-col", default=str(CFG.DEFAULT_LABEL_COL))
 
     # Mixed-selection rule.
@@ -203,7 +203,7 @@ def main() -> None:
     diag_path = (
         Path(args.diag_json)
         if args.diag_json
-        else CFG.OUTPUT_ROOT / "bin_diag" / f"quantile_vs_uniform_bin_diag_K{K}_B{B}.json"
+        else CFG.bin_diag_json_path(K, B)
     )
 
     for p in [train_path, val_path, policy_path, diag_path]:
