@@ -9,7 +9,7 @@
     ],
     "train_csv": "/home/pak/Documents/src_baocao/01_split/train_raw.csv",
     "val_csv": "/home/pak/Documents/src_baocao/01_split/val_raw.csv",
-    "token_diag_json": "/home/pak/Documents/src_baocao/03_outputs/token_diag/token_diag_train_B512.json",
+    "token_diag_json": "/home/pak/Documents/src_baocao/03_outputs/01_token_diag/token_diag_train_B512.json",
     "K": 512,
     "effective_num_bins": 512,
     "token_rule": "z in [0,1]; token=floor(K*z); clipped [0,K-1]",
@@ -114,13 +114,13 @@
     "blended_rank_alpha_0.25": 1,
     "blended_rank_alpha_0.50": 2
   },
-  "token_eval_summary_csv": "/home/pak/Documents/src_baocao/03_outputs/preprocessing/preprocess_token_eval_summary_K512.csv",
-  "candidate_eval_csv": "/home/pak/Documents/src_baocao/03_outputs/preprocessing/preprocess_candidate_eval_K512.csv",
+  "token_eval_summary_csv": "/home/pak/Documents/src_baocao/03_outputs/02_preprocessing/preprocess_token_eval_summary_K512.csv",
+  "candidate_eval_csv": "/home/pak/Documents/src_baocao/03_outputs/02_preprocessing/preprocess_candidate_eval_K512.csv",
   "outputs": {
-    "train_preprocessed_csv": "/home/pak/Documents/src_baocao/03_outputs/preprocessing/train_preprocessed_K512.csv",
-    "val_preprocessed_csv": "/home/pak/Documents/src_baocao/03_outputs/preprocessing/val_preprocessed_K512.csv",
-    "preprocess_policy_json": "/home/pak/Documents/src_baocao/03_outputs/preprocessing/preprocess_policy_K512.json",
-    "preprocess_report_json": "/home/pak/Documents/src_baocao/03_outputs/preprocessing/preprocess_report_K512.json"
+    "train_preprocessed_csv": "/home/pak/Documents/src_baocao/03_outputs/02_preprocessing/train_preprocessed_K512.csv",
+    "val_preprocessed_csv": "/home/pak/Documents/src_baocao/03_outputs/02_preprocessing/val_preprocessed_K512.csv",
+    "preprocess_policy_json": "/home/pak/Documents/src_baocao/03_outputs/02_preprocessing/preprocess_policy_K512.json",
+    "preprocess_report_json": "/home/pak/Documents/src_baocao/03_outputs/02_preprocessing/preprocess_report_K512.json"
   },
   "transform_features": [
     {

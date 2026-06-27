@@ -1,203 +1,125 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-final_pipeline/embedding.py
+02_embedding.py
 
-Embedding layer only.
+Official D3 embedding layer.
 
-Inputs:
-    tokens: LongTensor [B, F], values in [0, K]
-    z_values: optional FloatTensor [B, F], continuous preprocessed z in [0,1]
+D3 representation:
+  - local numeric token signal: offset interpolation between bin embeddings
+  - continuous signal: raw_scaled value in [0,1]
+  - fusion: feature-wise FiLM/multiply
+
+Input to forward:
+  tokens: LongTensor [B, F]
+  values: FloatTensor [B, F, 3]
+    values[..., 0] = offset within bin
+    values[..., 1] = raw_scaled continuous value
+    values[..., 2] = continuous mask, usually 1 for D3
 
 Output:
-    cell_embeddings: FloatTensor [B, F, value_dim + feature_dim]
-
-Design:
-    V(cell) = V(value) || V(feature)
-
-    V(value) = [z_continuous] || learnable_value_bin_embedding
-        - first coordinate preserves continuous numeric signal when z_values
-          is provided by build_token.py as X_*_z
-        - if z_values is not provided, falls back to token / K
-        - remaining coordinates are learnable but looked up through coarse bins
-          so K does not force one rare embedding vector per token
-
-    V(feature) = learnable feature identity embedding
+  cell_embeddings: FloatTensor [B, F, value_dim + feature_dim]
 """
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Dict
 
 import torch
 import torch.nn as nn
 
-try:
-    import config as CFG
-except Exception:
-    CFG = None
 
-
-class ValueFeatureConcatEmbedding(nn.Module):
-    """
-    Token + feature embedding with an explicit numeric value coordinate.
-
-    tokens: [B, F]
-    z_values: optional [B, F]
-    output: [B, F, cell_dim]
-    """
-
+class D3OffsetFiLMEmbedding(nn.Module):
     def __init__(
         self,
         *,
-        K: Optional[int] = None,
+        num_bins: int,
         n_features: int,
-        value_dim: Optional[int] = None,
-        feature_dim: Optional[int] = None,
-        value_random_std: Optional[float] = None,
-        value_num_bins: Optional[int] = None,
+        value_dim: int,
+        feature_dim: int,
+        gate_init: float = 0.0,
+        init_std: float = 0.02,
     ) -> None:
         super().__init__()
-
-        if K is None:
-            K = int(getattr(CFG, "TOKEN_K", 20000))
-        if value_dim is None:
-            value_dim = int(getattr(CFG, "VALUE_EMBED_DIM", 32))
-        if feature_dim is None:
-            feature_dim = int(getattr(CFG, "FEATURE_EMBED_DIM", 32))
-        if value_random_std is None:
-            value_random_std = float(getattr(CFG, "VALUE_RANDOM_STD", 0.02))
-        if value_num_bins is None:
-            value_num_bins = int(getattr(CFG, "VALUE_NUM_BINS", 128))
-
-        if K <= 0:
-            raise ValueError("K must be positive.")
+        if num_bins <= 1:
+            raise ValueError("num_bins must be > 1")
         if n_features <= 0:
-            raise ValueError("n_features must be positive.")
-        if value_dim < 1:
-            raise ValueError("value_dim must be >= 1 because the first coordinate is numeric z.")
-        if feature_dim < 1:
-            raise ValueError("feature_dim must be >= 1.")
-        if value_num_bins is None or int(value_num_bins) <= 0:
-            value_num_bins = int(K) + 1
+            raise ValueError("n_features must be positive")
+        if value_dim <= 0 or feature_dim <= 0:
+            raise ValueError("value_dim and feature_dim must be positive")
 
-        self.K = int(K)
+        self.num_bins = int(num_bins)
         self.n_features = int(n_features)
         self.value_dim = int(value_dim)
         self.feature_dim = int(feature_dim)
-        self.value_random_dim = int(value_dim - 1)
         self.cell_dim = int(value_dim + feature_dim)
-        self.value_num_bins = int(min(max(int(value_num_bins), 1), self.K + 1))
+        self.init_std = float(init_std)
 
-        if self.value_random_dim > 0:
-            self.value_random_embedding = nn.Embedding(self.value_num_bins, self.value_random_dim)
-            nn.init.normal_(self.value_random_embedding.weight, mean=0.0, std=value_random_std)
-        else:
-            self.value_random_embedding = None
-
+        # num_bins + 1 is required because interpolation at last bin uses b+1.
+        self.bin_embedding = nn.Embedding(self.num_bins + 1, self.value_dim)
         self.feature_embedding = nn.Embedding(self.n_features, self.feature_dim)
-        nn.init.normal_(self.feature_embedding.weight, mean=0.0, std=value_random_std)
 
-        self.register_buffer(
-            "default_feature_ids",
-            torch.arange(self.n_features, dtype=torch.long),
-            persistent=False,
+        self.gamma_proj = nn.Sequential(
+            nn.Linear(1, self.value_dim),
+            nn.GELU(),
+            nn.Linear(self.value_dim, self.value_dim),
         )
+        self.beta_proj = nn.Sequential(
+            nn.Linear(1, self.value_dim),
+            nn.GELU(),
+            nn.Linear(self.value_dim, self.value_dim),
+        )
+        self.cont_gate_logit = nn.Parameter(torch.full((self.n_features, 1), float(gate_init)))
 
-    def _numeric_z(self, tok: torch.Tensor, z_values: Optional[torch.Tensor]) -> torch.Tensor:
-        if z_values is None:
-            z = tok.float() / float(self.K)
-        else:
-            if z_values.ndim != 2:
-                raise ValueError(f"z_values must have shape [B, F], got {tuple(z_values.shape)}")
-            if tuple(z_values.shape) != tuple(tok.shape):
-                raise ValueError(f"z_values shape must match tokens, got {tuple(z_values.shape)} vs {tuple(tok.shape)}")
-            z = z_values.to(device=tok.device, dtype=torch.float32)
-        return z.clamp(0.0, 1.0)
+        nn.init.normal_(self.bin_embedding.weight, mean=0.0, std=self.init_std)
+        nn.init.normal_(self.feature_embedding.weight, mean=0.0, std=self.init_std)
+        for net in [self.gamma_proj, self.beta_proj]:
+            for m in net.modules():
+                if isinstance(m, nn.Linear):
+                    nn.init.xavier_uniform_(m.weight)
+                    nn.init.zeros_(m.bias)
 
-    def forward(
-        self,
-        tokens: torch.Tensor,
-        z_values: Optional[torch.Tensor] = None,
-        feature_ids: Optional[torch.Tensor] = None,
-    ) -> torch.Tensor:
-        """
-        tokens:
-            LongTensor [B, F]
+        self.register_buffer("default_feature_ids", torch.arange(self.n_features, dtype=torch.long), persistent=False)
 
-        z_values:
-            optional FloatTensor [B, F]. If provided, this is used as the
-            first monotonic coordinate and as the source for coarse bin lookup.
-            This preserves pre-rounding numeric detail from X_*_z.
+    def local_interp(self, bin_ids: torch.Tensor, offset: torch.Tensor) -> torch.Tensor:
+        b0 = bin_ids.long().clamp(0, self.num_bins - 1)
+        b1 = b0 + 1
+        e0 = self.bin_embedding(b0)
+        e1 = self.bin_embedding(b1)
+        return (1.0 - offset) * e0 + offset * e1
 
-        feature_ids:
-            optional LongTensor [F] or [B, F]. If None, use [0, 1, ..., F-1].
-        """
+    def forward(self, tokens: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
         if tokens.ndim != 2:
-            raise ValueError(f"tokens must have shape [B, F], got {tuple(tokens.shape)}")
+            raise ValueError(f"tokens must be [B,F], got {tuple(tokens.shape)}")
+        if values.ndim != 3 or values.shape[-1] < 3:
+            raise ValueError(f"values must be [B,F,3], got {tuple(values.shape)}")
+        if tuple(values.shape[:2]) != tuple(tokens.shape):
+            raise ValueError(f"values shape must match tokens, got {tuple(values.shape)} vs {tuple(tokens.shape)}")
+
+        vals = values.to(dtype=torch.float32, device=tokens.device)
+        offset = vals[..., 0:1].clamp(0.0, 1.0)
+        cont = vals[..., 1:2].clamp(0.0, 1.0)
+        mask = vals[..., 2:3].clamp(0.0, 1.0)
 
         B, F = tokens.shape
-        if F != self.n_features:
-            raise ValueError(f"Expected F={self.n_features}, got F={F}")
+        local = self.local_interp(tokens, offset)
+        gamma = torch.tanh(self.gamma_proj(cont))
+        beta = self.beta_proj(cont)
 
-        tok = tokens.long().clamp(0, self.K)
-        z_scalar = self._numeric_z(tok, z_values)  # [B, F]
-        z = z_scalar.unsqueeze(-1)  # [B, F, 1]
+        gate = torch.sigmoid(self.cont_gate_logit).to(device=tokens.device).unsqueeze(0).expand(B, F, 1)
+        g = mask * gate
+        value_emb = local * (1.0 + g * gamma) + g * beta
 
-        if self.value_random_embedding is None:
-            value_emb = z
-        else:
-            # If z_values is None and bins == K+1, this exactly matches the old
-            # token-id lookup. Otherwise, multiple numeric positions share a
-            # learnable bin while z still preserves continuous magnitude.
-            if z_values is None and self.value_num_bins == self.K + 1:
-                value_bin = tok
-            else:
-                value_bin = torch.round(z_scalar * float(self.value_num_bins - 1)).long()
-                value_bin = value_bin.clamp(0, self.value_num_bins - 1)
-            value_random = self.value_random_embedding(value_bin)
-            value_emb = torch.cat([z, value_random], dim=-1)
-
-        if feature_ids is None:
-            fid = self.default_feature_ids.unsqueeze(0).expand(B, F)
-        else:
-            fid = feature_ids.long()
-            if fid.ndim == 1:
-                if fid.numel() != F:
-                    raise ValueError(f"feature_ids length must be {F}, got {fid.numel()}")
-                fid = fid.unsqueeze(0).expand(B, F)
-            elif fid.ndim == 2:
-                if tuple(fid.shape) != (B, F):
-                    raise ValueError(f"feature_ids shape must be [B,F]={B,F}, got {tuple(fid.shape)}")
-            else:
-                raise ValueError("feature_ids must be None, [F], or [B,F].")
-            fid = fid.clamp(0, self.n_features - 1).to(tok.device)
-
-        feature_emb = self.feature_embedding(fid)
+        feature_ids = self.default_feature_ids.to(device=tokens.device).unsqueeze(0).expand(B, F)
+        feature_emb = self.feature_embedding(feature_ids)
         return torch.cat([value_emb, feature_emb], dim=-1)
 
-    def extra_repr(self) -> str:
-        return (
-            f"K={self.K}, n_features={self.n_features}, "
-            f"value_dim={self.value_dim}, feature_dim={self.feature_dim}, "
-            f"value_num_bins={self.value_num_bins}, cell_dim={self.cell_dim}"
-        )
-
-
-def smoke_test() -> None:
-    emb = ValueFeatureConcatEmbedding(K=500, n_features=4, value_dim=8, feature_dim=8, value_num_bins=128)
-    x = torch.tensor([[0, 62, 250, 500], [5, 62, 251, 499]], dtype=torch.long)
-    z_cont = torch.tensor([[0.0, 0.12341, 0.5001, 1.0], [0.01, 0.12395, 0.5022, 0.998]], dtype=torch.float32)
-    y_tok = emb(x)
-    y_z = emb(x, z_values=z_cont)
-    print("input tokens:", tuple(x.shape))
-    print("output token-only:", tuple(y_tok.shape))
-    print("output with z:", tuple(y_z.shape))
-    print("cell_dim:", emb.cell_dim)
-    print("value_num_bins:", emb.value_num_bins)
-    print("token-only numeric coords sample0:", y_tok[0, :, 0].detach().cpu().tolist())
-    print("continuous numeric coords sample0:", y_z[0, :, 0].detach().cpu().tolist())
-
-
-if __name__ == "__main__":
-    smoke_test()
+    def gate_summary(self) -> Dict[str, float]:
+        with torch.no_grad():
+            g = torch.sigmoid(self.cont_gate_logit.detach().cpu()).numpy()
+        return {
+            "cont_gate_min": float(g.min()),
+            "cont_gate_max": float(g.max()),
+            "cont_gate_mean": float(g.mean()),
+            "cont_gate_std": float(g.std()),
+        }
