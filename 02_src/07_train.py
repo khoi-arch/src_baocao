@@ -1082,6 +1082,9 @@ def main() -> None:
     dataset_path = Path(args.dataset_npz) if args.dataset_npz else default_dataset_path(K_artifact, B)
     metadata_path = Path(args.metadata_json) if args.metadata_json else default_metadata_path(K_artifact, B)
 
+    dataset_path = resolve_repo_path(dataset_path, "03_outputs/05_dataset/dataset.npz")
+    metadata_path = resolve_repo_path(metadata_path, "03_outputs/05_dataset/metadata.json")
+
     data, meta = load_dataset(dataset_path, metadata_path)
 
     X_train = data["X_train_bin"].astype(np.int64)
@@ -1289,7 +1292,7 @@ def main() -> None:
         "val_counts": np.bincount(y_val, minlength=num_classes).astype(int).tolist(),
     })
 
-    print("===== fusion ablation training start =====")
+    print("===== official D3 training start =====")
     print(f"run_id: {args.run_id}")
     print(f"spec: {spec}")
     print(f"run_dir: {out_dir}")
@@ -1464,7 +1467,7 @@ def main() -> None:
     )
     _train_mod.save_json(out_dir / "diagnosis_summary.json", diagnosis)
 
-    print("===== fusion ablation training done =====")
+    print("===== official D3 training done =====")
     print(f"run_id:                {args.run_id}")
     print(f"representation:        {diagnosis['representation']}")
     print(f"best_epoch:            {best_epoch}")
