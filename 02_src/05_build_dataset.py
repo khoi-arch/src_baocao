@@ -1,6 +1,18 @@
 import json
 import zipfile
 from pathlib import Path
+import os
+import sys
+
+_THIS_FILE = Path(__file__).resolve()
+_SRC_DIR = _THIS_FILE.parent
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))
+
+import config as CFG
+
+# Make all old relative paths stable even if launched from 02_src/.
+os.chdir(CFG.ROOT_DIR)
 
 import numpy as np
 import pandas as pd
@@ -120,8 +132,8 @@ def main():
     train_raw_path = Path("01_split/train_raw.csv")
     val_raw_path = Path("01_split/val_raw.csv")
 
-    A_dir = Path("03_outputs/build_mixed_quantile_offset/K512_B512")
-    B_dir = Path("03_outputs/build_mixed_quantile_offset/K512_B512_rank_uniform_only")
+    A_dir = Path("03_outputs/04_token/K512_B512")
+    B_dir = Path("03_outputs/04_token/K512_B512_rank_uniform_only")
 
     A_npz_path = A_dir / "dataset.npz"
     B_npz_path = B_dir / "dataset.npz"
@@ -259,7 +271,7 @@ def main():
             "C2_strategy": c2_strategy,
         })
 
-    out_C1_dir = Path("03_outputs/build_mixed_quantile_offset/K512_B512_C1_selective_rank_current")
+    out_C1_dir = Path("03_outputs/04_token/K512_B512_C1_selective_rank_current")
     out_C2_dir = Path("03_outputs/00_dataset")
     out_C1_dir.mkdir(parents=True, exist_ok=True)
     out_C2_dir.mkdir(parents=True, exist_ok=True)
@@ -269,7 +281,7 @@ def main():
 
     df = pd.DataFrame(rows)
 
-    diag_dir = Path("03_outputs/bin_diag")
+    diag_dir = Path("03_outputs/05_dataset")
     diag_dir.mkdir(parents=True, exist_ok=True)
 
     diag_csv = diag_dir / "K512_C1_C2_hybrid_policy_diag.csv"
@@ -352,7 +364,7 @@ def main():
     save_json(C1_meta, out_C1_dir / "metadata.json")
     save_json(C2_meta, out_C2_dir / "metadata.json")
 
-    comparison_path = Path("03_outputs/build_mixed_quantile_offset/K512_C1_C2_hybrid_summary.json")
+    comparison_path = Path("03_outputs/04_token/K512_C1_C2_hybrid_summary.json")
     save_json({
         "A_current_mixed": str(A_dir),
         "B_rank_uniform_all": str(B_dir),

@@ -14,7 +14,7 @@ Input:
   - quantile_vs_uniform_bin_diag_K{K}_B{B}.json
 
 Output:
-  03_outputs/build_mixed_quantile_offset/K{K}_B{B}/
+  03_outputs/token/K{K}_B{B}/
     dataset.npz
     metadata.json
 """
@@ -40,7 +40,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--val-preprocessed", default="")
     p.add_argument("--policy-json", default="")
     p.add_argument("--diag-json", default="")
-    p.add_argument("--out-root", default=str(getattr(CFG, "BUILD_ROOT", CFG.OUTPUT_ROOT / "04_build_mixed_quantile_offset")))
+    p.add_argument("--out-root", default=str(CFG.OUTPUT_ROOT / "04_token"))
     p.add_argument("--label-col", default=str(CFG.DEFAULT_LABEL_COL))
 
     # Mixed-selection rule.
@@ -192,7 +192,7 @@ def assign_bin_offset(values: np.ndarray, edges: np.ndarray) -> Tuple[np.ndarray
     return bin_id, offset
 
 
-def main() -> None:
+def _main_build_current_mixed() -> None:
     args = parse_args()
     K = int(args.K)
     B = int(args.num_bins)
@@ -203,7 +203,7 @@ def main() -> None:
     diag_path = (
         Path(args.diag_json)
         if args.diag_json
-        else CFG.bin_diag_json_path(K, B)
+        else CFG.OUTPUT_ROOT / "03_bin_diag" / f"quantile_vs_uniform_bin_diag_K{K}_B{B}.json"
     )
 
     for p in [train_path, val_path, policy_path, diag_path]:
@@ -374,6 +374,331 @@ def main() -> None:
     print(f"strategy_counts={strategy_counts}")
     print(f"dataset={out_npz}")
     print(f"metadata={out_meta}")
+
+
+
+# ===== integrated rank-uniform-only source B =====
+
+def _rank_as_str_list(arr):
+    out = []
+    for x in arr:
+        if isinstance(x, bytes):
+            out.append(x.decode("utf-8"))
+        else:
+            out.append(str(x))
+    return out
+
+
+def _rank_entropy_norm_from_counts(counts):
+    counts = np.asarray(counts, dtype=np.float64)
+    counts = counts[counts > 0]
+    if counts.size <= 1:
+        return 0.0
+    p = counts / counts.sum()
+    h = -np.sum(p * np.log(p + 1e-12))
+    return float(h / np.log(counts.size))
+
+
+def _rank_uniform_bin_offset(z, num_bins):
+    z = np.asarray(z, dtype=np.float64)
+    z = np.nan_to_num(z, nan=0.0, posinf=1.0, neginf=0.0)
+    z = np.clip(z, 0.0, 1.0)
+
+    scaled = z * float(num_bins)
+    b = np.floor(scaled).astype(np.int64)
+    b = np.clip(b, 0, num_bins - 1)
+
+    off = scaled - b.astype(np.float64)
+    off[z >= 1.0] = 1.0
+
+    return b.astype(np.int64), np.clip(off, 0.0, 1.0).astype(np.float32)
+
+
+def _rank_piecewise_unique_rank_fit_transform(train_values, val_values):
+    train_values = np.asarray(train_values, dtype=np.float64)
+    val_values = np.asarray(val_values, dtype=np.float64)
+
+    finite = train_values[np.isfinite(train_values)]
+    if finite.size == 0:
+        train_values = np.zeros_like(train_values, dtype=np.float64)
+        val_values = np.zeros_like(val_values, dtype=np.float64)
+    else:
+        fill = float(np.median(finite))
+        train_values = np.nan_to_num(
+            train_values,
+            nan=fill,
+            posinf=float(finite.max()),
+            neginf=float(finite.min()),
+        )
+        val_values = np.nan_to_num(
+            val_values,
+            nan=fill,
+            posinf=float(finite.max()),
+            neginf=float(finite.min()),
+        )
+
+    uniq = np.unique(train_values)
+
+    if uniq.size <= 1:
+        return np.zeros_like(train_values, dtype=np.float64), np.zeros_like(val_values, dtype=np.float64), uniq
+
+    ranks = np.linspace(0.0, 1.0, uniq.size, dtype=np.float64)
+
+    idx = np.searchsorted(uniq, train_values, side="left")
+    idx = np.clip(idx, 0, uniq.size - 1)
+    z_train = ranks[idx]
+
+    z_val = np.interp(val_values, uniq, ranks, left=0.0, right=1.0)
+
+    return z_train, z_val, uniq
+
+
+def _rank_feature_diag(feature, raw_train, z_train, bin_ids, num_bins):
+    counts = np.bincount(np.asarray(bin_ids, dtype=np.int64), minlength=num_bins)
+    used = int(np.count_nonzero(counts))
+    n = int(len(raw_train))
+    raw_unique = int(np.unique(raw_train[np.isfinite(raw_train)]).size) if n else 0
+
+    rare_1 = int(np.sum(counts == 1))
+    rare_5 = int(np.sum((counts > 0) & (counts <= 5)))
+    rare_10 = int(np.sum((counts > 0) & (counts <= 10)))
+
+    return {
+        "feature": feature,
+        "strategy": "rank_uniform_offset",
+        "n": n,
+        "raw_unique": raw_unique,
+        "bins_used": used,
+        "empty_bins": int(num_bins - used),
+        "empty_bin_ratio": float((num_bins - used) / max(num_bins, 1)),
+        "rare_bins_count_eq_1": rare_1,
+        "rare_bins_count_le_5": rare_5,
+        "rare_bins_count_le_10": rare_10,
+        "rare_used_bin_ratio_le_5": float(rare_5 / max(used, 1)),
+        "rare_used_bin_ratio_le_10": float(rare_10 / max(used, 1)),
+        "dominant_bin_ratio": float(counts.max() / max(n, 1)),
+        "entropy_norm": _rank_entropy_norm_from_counts(counts),
+        "compression_factor": float(raw_unique / max(used, 1)),
+        "z_min": float(np.min(z_train)) if n else None,
+        "z_max": float(np.max(z_train)) if n else None,
+        "uniform_transformed_bin_width": float(1.0 / num_bins),
+    }
+
+
+def _build_rank_uniform_only_source_B(*, K: int, B: int, out_root: Path) -> None:
+    """
+    Integrated B-source builder.
+
+    This is not final C2. It creates:
+      03_outputs/04_token/K512_B512_rank_uniform_only/dataset.npz
+      03_outputs/04_token/K512_B512_rank_uniform_only/metadata.json
+
+    05_build_dataset.py later consumes A+B to build C2.
+    """
+    out_root = Path(out_root)
+    if not out_root.is_absolute():
+        out_root = CFG.ROOT_DIR / out_root
+
+    current_dir = out_root / f"K{K}_B{B}"
+    out_dir = out_root / f"K{K}_B{B}_rank_uniform_only"
+
+    template_npz_path = current_dir / "dataset.npz"
+    template_meta_path = current_dir / "metadata.json"
+
+    train_raw_path = Path(CFG.TRAIN_RAW_CSV)
+    val_raw_path = Path(CFG.VAL_RAW_CSV)
+
+    required = [train_raw_path, val_raw_path, template_npz_path, template_meta_path]
+    for fp in required:
+        if not fp.exists():
+            raise FileNotFoundError(fp)
+
+    train_df = pd.read_csv(train_raw_path)
+    val_df = pd.read_csv(val_raw_path)
+
+    with np.load(template_npz_path, allow_pickle=True) as data:
+        template = {k: data[k] for k in data.files}
+        if "feature_names" in data.files:
+            feature_names = _rank_as_str_list(data["feature_names"])
+        else:
+            feature_names = [
+                c for c in train_df.columns
+                if c not in set(CFG.TARGET_COLS) and pd.api.types.is_numeric_dtype(train_df[c])
+            ]
+
+    n_train = len(train_df)
+    n_val = len(val_df)
+    n_features = len(feature_names)
+
+    X_train_bin = np.zeros((n_train, n_features), dtype=np.int64)
+    X_val_bin = np.zeros((n_val, n_features), dtype=np.int64)
+    X_train_offset = np.zeros((n_train, n_features), dtype=np.float32)
+    X_val_offset = np.zeros((n_val, n_features), dtype=np.float32)
+
+    strategies = {}
+    rows = []
+    constant_features = []
+
+    for j, feat in enumerate(feature_names):
+        tr_raw = train_df[feat].to_numpy(dtype=np.float64)
+        va_raw = val_df[feat].to_numpy(dtype=np.float64)
+
+        finite = tr_raw[np.isfinite(tr_raw)]
+        raw_unique = int(np.unique(finite).size) if finite.size else 1
+
+        if raw_unique <= 1:
+            strategies[feat] = "constant"
+            constant_features.append(feat)
+
+            X_train_bin[:, j] = 0
+            X_val_bin[:, j] = 0
+            X_train_offset[:, j] = 0.0
+            X_val_offset[:, j] = 0.0
+
+            rows.append({
+                "feature": feat,
+                "strategy": "constant",
+                "n": int(n_train),
+                "raw_unique": int(raw_unique),
+                "bins_used": 1,
+                "empty_bins": int(B - 1),
+                "empty_bin_ratio": float((B - 1) / B),
+                "rare_bins_count_eq_1": 0,
+                "rare_bins_count_le_5": 0,
+                "rare_bins_count_le_10": 0,
+                "rare_used_bin_ratio_le_5": 0.0,
+                "rare_used_bin_ratio_le_10": 0.0,
+                "dominant_bin_ratio": 1.0,
+                "entropy_norm": 0.0,
+                "compression_factor": float(raw_unique),
+                "z_min": 0.0,
+                "z_max": 0.0,
+                "uniform_transformed_bin_width": float(1.0 / B),
+            })
+            continue
+
+        strategies[feat] = "rank_uniform_offset"
+
+        z_tr, z_va, _uniq = _rank_piecewise_unique_rank_fit_transform(tr_raw, va_raw)
+
+        bt, ot = _rank_uniform_bin_offset(z_tr, B)
+        bv, ov = _rank_uniform_bin_offset(z_va, B)
+
+        X_train_bin[:, j] = bt
+        X_val_bin[:, j] = bv
+        X_train_offset[:, j] = ot
+        X_val_offset[:, j] = ov
+
+        rows.append(_rank_feature_diag(feat, tr_raw, z_tr, bt, B))
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    out_arrays = dict(template)
+    out_arrays["X_train_bin"] = X_train_bin
+    out_arrays["X_val_bin"] = X_val_bin
+    out_arrays["X_train_offset"] = X_train_offset
+    out_arrays["X_val_offset"] = X_val_offset
+
+    np.savez_compressed(out_dir / "dataset.npz", **out_arrays)
+
+    current_meta = json.loads(template_meta_path.read_text(encoding="utf-8"))
+
+    meta = dict(current_meta)
+    meta["stage"] = "rank_uniform_policy_ablation"
+    meta["policy_name"] = "rank_uniform_only"
+    meta["K"] = K
+    meta["num_bins"] = B
+    meta["source_raw_train"] = str(train_raw_path)
+    meta["source_raw_val"] = str(val_raw_path)
+    meta["source_template_npz"] = str(template_npz_path)
+    meta["strategy_counts"] = {
+        "rank_uniform_offset": int(n_features - len(constant_features)),
+        "uniform_offset": 0,
+        "quantile_offset": 0,
+        "constant": int(len(constant_features)),
+    }
+    meta["constant_features"] = constant_features
+    meta["feature_strategies"] = strategies
+    meta["splits"] = {
+        "train": {
+            "n_rows": int(n_train),
+            "X_bin_shape": list(X_train_bin.shape),
+            "X_offset_shape": list(X_train_offset.shape),
+            "bin_min": int(X_train_bin.min()),
+            "bin_max": int(X_train_bin.max()),
+            "offset_min": float(X_train_offset.min()),
+            "offset_max": float(X_train_offset.max()),
+        },
+        "val": {
+            "n_rows": int(n_val),
+            "X_bin_shape": list(X_val_bin.shape),
+            "X_offset_shape": list(X_val_offset.shape),
+            "bin_min": int(X_val_bin.min()),
+            "bin_max": int(X_val_bin.max()),
+            "offset_min": float(X_val_offset.min()),
+            "offset_max": float(X_val_offset.max()),
+        },
+    }
+
+    (out_dir / "metadata.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    diag_dir = Path(CFG.BIN_DIAG_DIR)
+    diag_dir.mkdir(parents=True, exist_ok=True)
+
+    diag_csv = diag_dir / f"rank_uniform_token_diag_K{K}_B{B}.csv"
+    diag_json = diag_dir / f"rank_uniform_token_diag_K{K}_B{B}.json"
+
+    df_diag = pd.DataFrame(rows)
+    df_diag.to_csv(diag_csv, index=False)
+
+    nonconst = df_diag[df_diag["strategy"] != "constant"]
+
+    summary = {
+        "stage": "rank_uniform_token_diag",
+        "policy_name": "rank_uniform_only",
+        "K": K,
+        "num_bins": B,
+        "n_features": int(n_features),
+        "n_constant": int(len(constant_features)),
+        "n_nonconstant": int(len(nonconst)),
+        "mean_bins_used_nonconstant": float(nonconst["bins_used"].mean()) if len(nonconst) else 0.0,
+        "median_bins_used_nonconstant": float(nonconst["bins_used"].median()) if len(nonconst) else 0.0,
+        "mean_empty_bin_ratio_nonconstant": float(nonconst["empty_bin_ratio"].mean()) if len(nonconst) else 0.0,
+        "mean_compression_nonconstant": float(nonconst["compression_factor"].mean()) if len(nonconst) else 0.0,
+        "median_compression_nonconstant": float(nonconst["compression_factor"].median()) if len(nonconst) else 0.0,
+        "mean_entropy_nonconstant": float(nonconst["entropy_norm"].mean()) if len(nonconst) else 0.0,
+        "mean_dominant_bin_ratio_nonconstant": float(nonconst["dominant_bin_ratio"].mean()) if len(nonconst) else 0.0,
+        "features_full_512_bins": int((nonconst["bins_used"] == B).sum()) if len(nonconst) else 0,
+        "features_bins_used_ge_400": int((nonconst["bins_used"] >= 400).sum()) if len(nonconst) else 0,
+        "features_bins_used_lt_128": int((nonconst["bins_used"] < 128).sum()) if len(nonconst) else 0,
+        "features_rare_ratio_le_5_gt_0_2": int((nonconst["rare_used_bin_ratio_le_5"] > 0.2).sum()) if len(nonconst) else 0,
+    }
+
+    diag_json.write_text(json.dumps({"summary": summary, "features": rows}, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    summary_path = out_root / f"K{K}_A_current_vs_B_rank_uniform_summary.json"
+    summary_path.write_text(json.dumps({
+        "A_current_mixed_artifact": str(current_dir),
+        "B_rank_uniform_artifact": str(out_dir),
+        "B_rank_uniform_diag_csv": str(diag_csv),
+        "B_rank_uniform_diag_json": str(diag_json),
+        "B_summary": summary,
+    }, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    print("===== integrated rank-uniform source B done =====")
+    print("A current:", current_dir)
+    print("B rank-uniform:", out_dir)
+    print("B diag:", diag_json)
+
+
+def main() -> None:
+    args = parse_args()
+    _main_build_current_mixed()
+    _build_rank_uniform_only_source_B(
+        K=int(args.K),
+        B=int(args.num_bins),
+        out_root=Path(args.out_root),
+    )
 
 
 if __name__ == "__main__":
