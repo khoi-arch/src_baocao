@@ -1,0 +1,65 @@
+from __future__ import annotations
+
+"""
+Official C2+D3 repo path configuration.
+
+In this cleaned repo, C2 tokenization + D3 model is no longer named as an
+experiment. It is the default official pipeline:
+
+  03_outputs/00_dataset/        official tokenized dataset
+  03_outputs/01_model/          official best model/checkpoint/reports
+  03_outputs/02_audit_best/     official result/token/embedding audit
+  03_outputs/03_audit_rootcause official root-cause/class-overlap audit
+"""
+
+from pathlib import Path
+from typing import Any
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+
+RAW_DATASET_DIR = ROOT_DIR / "00_raw_dataset"
+RAW_DATASET_CSV = RAW_DATASET_DIR / "Obfuscated-MalMem2022.csv"
+
+SPLIT_DIR = ROOT_DIR / "01_split"
+TRAIN_RAW_CSV = SPLIT_DIR / "train_raw.csv"
+VAL_RAW_CSV = SPLIT_DIR / "val_raw.csv"
+
+OUTPUT_ROOT = ROOT_DIR / "03_outputs"
+OUTPUT_DIR = OUTPUT_ROOT
+
+DATASET_DIR = OUTPUT_ROOT / "00_dataset"
+MODEL_DIR = OUTPUT_ROOT / "01_model"
+AUDIT_BEST_DIR = OUTPUT_ROOT / "02_audit_best"
+AUDIT_ROOTCAUSE_DIR = OUTPUT_ROOT / "03_audit_rootcause"
+
+DATASET_NPZ = DATASET_DIR / "dataset.npz"
+DATASET_METADATA = DATASET_DIR / "metadata.json"
+
+BEST_MODEL = MODEL_DIR / "best_model.pt"
+LAST_MODEL = MODEL_DIR / "last_model.pt"
+MODEL_CONFIG = MODEL_DIR / "config.json"
+CLASS_WEIGHTS_JSON = MODEL_DIR / "class_weights.json"
+DIAGNOSIS_SUMMARY = MODEL_DIR / "diagnosis_summary.json"
+HISTORY_CSV = MODEL_DIR / "history.csv"
+
+MODEL_REPORTS_DIR = MODEL_DIR / "reports"
+MODEL_PREDICTIONS_DIR = MODEL_DIR / "predictions"
+VAL_PREDICTIONS = MODEL_PREDICTIONS_DIR / "val_predictions_best.csv"
+TRAIN_PREDICTIONS = MODEL_PREDICTIONS_DIR / "train_predictions_best.csv"
+
+LABEL_NAMES = ["Benign", "Ransomware", "Spyware", "Trojan"]
+NUM_CLASSES = 4
+NUM_BINS = 512
+
+# Backward-compatible helper for older scripts that used cfg("NAME", default).
+def cfg(name: str, default: Any = None) -> Any:
+    return globals().get(name, default)
+
+get = cfg
+
+# Optional aliases used by old scripts.
+TRAIN_RAW = TRAIN_RAW_CSV
+VAL_RAW = VAL_RAW_CSV
+DATASET_PATH = DATASET_NPZ
+METADATA_PATH = DATASET_METADATA
+CHECKPOINT_PATH = BEST_MODEL
