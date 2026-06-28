@@ -1,0 +1,5 @@
+,Benign,Ransomware,Spyware,Trojan
+Benign,5856,0,2,2
+Ransomware,0,1449,253,257
+Spyware,2,145,1627,230
+Trojan,0,281,160,1456
