@@ -1052,7 +1052,7 @@ def evaluate_d1b_aux_pairs(
     model: nn.Module,
     loader: DataLoader,
     device: torch.device,
-    label_names: List[str],
+    label_names: List[str] | None = None,
 ) -> List[Dict[str, object]]:
     """
     Evaluate D1b auxiliary pair attention heads on validation data.
@@ -1732,7 +1732,7 @@ def main() -> None:
             best_epoch = epoch
             best_train_eval = train_eval
             best_val_eval = val_eval
-            best_aux_pair_eval = evaluate_d1b_aux_pairs(model=model, loader=val_loader, device=device)
+            best_aux_pair_eval = evaluate_d1b_aux_pairs(model=model, loader=val_loader, device=device, label_names=label_names)
             bad_epochs = 0
             torch.save(
                 {
