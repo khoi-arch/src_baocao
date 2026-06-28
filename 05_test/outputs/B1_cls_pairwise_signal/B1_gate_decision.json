@@ -1,0 +1,16 @@
+{
+  "result": "PASS — CLS has usable pairwise signal",
+  "reason": "Mean pairwise LogisticRegression macro-F1=0.8359, mean AUC=0.9128, and mean wrong-direction true-in-top2=0.7360. This supports testing reranking or auxiliary pairwise heads.",
+  "mean_pairwise_logreg_macro_f1": 0.8358927817745782,
+  "min_pairwise_logreg_macro_f1": 0.7985600971999018,
+  "mean_pairwise_logreg_auc": 0.9128455097310489,
+  "mean_wrong_direction_true_in_top2_rate": 0.7360365969847708,
+  "thresholds": {
+    "pass_mean_macro_f1": 0.8,
+    "pass_mean_auc": 0.88,
+    "pass_mean_wrong_top2": 0.65,
+    "mixed_mean_macro_f1": 0.72,
+    "mixed_mean_auc": 0.8
+  },
+  "note": "Gate is diagnostic only, not an official validation metric."
+}

@@ -1,0 +1,10 @@
+true_class,pred_class,n_wrong,wrong_true_in_top2,wrong_true_in_top2_rate
+Ransomware,Spyware,302,210,0.695364238410596
+Ransomware,Trojan,301,244,0.8106312292358804
+Trojan,Ransomware,295,256,0.8677966101694915
+Spyware,Trojan,217,163,0.7511520737327189
+Trojan,Spyware,213,136,0.6384976525821596
+Spyware,Ransomware,144,94,0.6527777777777778
+Benign,Ransomware,3,0,0.0
+Spyware,Benign,2,0,0.0
+Benign,Spyware,1,0,0.0

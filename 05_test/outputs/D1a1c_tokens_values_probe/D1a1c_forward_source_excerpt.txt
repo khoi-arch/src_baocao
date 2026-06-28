@@ -1,0 +1,20 @@
+    def forward(self, tokens: torch.Tensor, values: torch.Tensor, *, return_info: bool = False):
+        cell_emb = self.embedding(tokens, values)
+        x = self.input_proj(cell_emb)
+        B = x.shape[0]
+        cls = self.cls_token.expand(B, 1, self.hidden_dim)
+        x = torch.cat([cls, x], dim=1)
+        encoded = self.encoder(x)
+        cls_out = encoded[:, 0, :]
+        logits = self.classifier(cls_out)
+        if return_info:
+            return logits, {
+                "cell_emb_shape": tuple(cell_emb.shape),
+                "encoded_shape": tuple(encoded.shape),
+                "cls_out_shape": tuple(cls_out.shape),
+                "cell_dim": self.cell_dim,
+                "num_bins": self.num_bins,
+                "run_id": self.run_id,
+                "spec": self.model_spec,
+            }
+        return logits

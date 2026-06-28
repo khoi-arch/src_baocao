@@ -1,0 +1,15 @@
+{
+  "result": "MIXED — large oracle headroom, but simple margin-bounded correction captures limited gain",
+  "reason": "All-top2 oracle macro-F1=0.9523 (delta=0.1423), but margin<=0.2 oracle delta_macro_f1=0.0378. This means recoverable errors exist, but many require more than a small-margin rule.",
+  "recommendation": "Proceed to C3 external CLS/logit pairwise reranker diagnostic. Do not rely on a simple margin-threshold rule.",
+  "original_accuracy": 0.8738907849829352,
+  "original_macro_f1": 0.8100942811251435,
+  "oracle_all_top2_accuracy": 0.9680034129692833,
+  "oracle_all_top2_macro_f1": 0.9523446693856183,
+  "oracle_all_top2_delta_accuracy": 0.09411262798634812,
+  "oracle_all_top2_delta_macro_f1": 0.14225038826047487,
+  "margin_le_0.2_delta_macro_f1": 0.037801608887495286,
+  "margin_le_0.3_delta_macro_f1": 0.04969680532114218,
+  "margin_le_0.5_delta_macro_f1": 0.07079154255332532,
+  "guardrail": "C2 is an oracle simulation only; it is not a deployable reranker and does not change baseline files."
+}

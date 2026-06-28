@@ -1,0 +1,5 @@
+class_id,class_label,source,n_used,n_true_total,n_correct
+0,Benign,correct_val_samples,5856,5860,5856
+1,Ransomware,correct_val_samples,1356,1959,1356
+2,Spyware,correct_val_samples,1641,2004,1641
+3,Trojan,correct_val_samples,1389,1897,1389

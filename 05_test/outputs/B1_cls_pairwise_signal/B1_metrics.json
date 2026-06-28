@@ -1,0 +1,57 @@
+{
+  "main_metrics": {
+    "n_total": 11720,
+    "cls_dim": 128,
+    "n_correct": 10242,
+    "n_wrong": 1478,
+    "accuracy_from_cls_export": 0.873890785,
+    "top2_accuracy_from_cls_export": 0.968003413,
+    "wrong_true_in_top2": 1103,
+    "wrong_true_in_top2_rate": 0.7462787551,
+    "pairs": [
+      "Ransomware<->Spyware",
+      "Ransomware<->Trojan",
+      "Spyware<->Trojan"
+    ]
+  },
+  "gate": {
+    "result": "PASS — CLS has usable pairwise signal",
+    "reason": "Mean pairwise LogisticRegression macro-F1=0.8359, mean AUC=0.9128, and mean wrong-direction true-in-top2=0.7360. This supports testing reranking or auxiliary pairwise heads.",
+    "mean_pairwise_logreg_macro_f1": 0.8358927817745782,
+    "min_pairwise_logreg_macro_f1": 0.7985600971999018,
+    "mean_pairwise_logreg_auc": 0.9128455097310489,
+    "mean_wrong_direction_true_in_top2_rate": 0.7360365969847708,
+    "thresholds": {
+      "pass_mean_macro_f1": 0.8,
+      "pass_mean_auc": 0.88,
+      "pass_mean_wrong_top2": 0.65,
+      "mixed_mean_macro_f1": 0.72,
+      "mixed_mean_auc": 0.8
+    },
+    "note": "Gate is diagnostic only, not an official validation metric."
+  },
+  "label_names": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "pairs": [
+    [
+      "Ransomware",
+      "Spyware"
+    ],
+    [
+      "Ransomware",
+      "Trojan"
+    ],
+    [
+      "Spyware",
+      "Trojan"
+    ]
+  ],
+  "inputs": {
+    "cls_npz": "/home/pak/Documents/src_baocao/05_test/outputs/B1_cls_pairwise_signal/val_cls_embeddings.npz",
+    "pred_csv": "/home/pak/Documents/src_baocao/05_test/outputs/B1_cls_pairwise_signal/val_cls_predictions_with_probs.csv"
+  }
+}

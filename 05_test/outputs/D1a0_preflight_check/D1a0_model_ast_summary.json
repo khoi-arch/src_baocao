@@ -1,0 +1,1435 @@
+{
+  "06_model.py": {
+    "file": "/home/pak/Documents/src_baocao/02_src/06_model.py",
+    "n_lines": 159,
+    "imports": [
+      "__future__.annotations",
+      "importlib.util",
+      "pathlib.Path",
+      "typing.Dict",
+      "torch",
+      "torch.nn"
+    ],
+    "classes": [
+      {
+        "name": "D3C2D3Transformer",
+        "bases": [
+          "nn.Module"
+        ],
+        "lineno": 38,
+        "end_lineno": 158,
+        "methods": [
+          {
+            "name": "__init__",
+            "args": [
+              "self",
+              "num_bins",
+              "n_features",
+              "num_classes",
+              "value_dim",
+              "feature_dim",
+              "hidden_dim",
+              "num_layers",
+              "num_heads",
+              "dropout",
+              "classifier_hidden_dim",
+              "classifier_dropout",
+              "norm_first",
+              "gate_init",
+              "activation"
+            ],
+            "lineno": 39,
+            "end_lineno": 134
+          },
+          {
+            "name": "forward",
+            "args": [
+              "self",
+              "tokens",
+              "values",
+              "return_info"
+            ],
+            "lineno": 136,
+            "end_lineno": 155
+          },
+          {
+            "name": "embedding_extra_summary",
+            "args": [
+              "self"
+            ],
+            "lineno": 157,
+            "end_lineno": 158
+          }
+        ]
+      }
+    ],
+    "functions": [
+      {
+        "name": "cfg",
+        "args": [
+          "name",
+          "default"
+        ],
+        "lineno": 34,
+        "end_lineno": 35
+      }
+    ],
+    "flags": {
+      "uses_torch": true,
+      "uses_nn_module": true,
+      "contains_transformer": true,
+      "contains_cls": true,
+      "contains_forward": true,
+      "contains_focal": false,
+      "contains_class_weight": false,
+      "contains_scheduler": false,
+      "contains_checkpoint": false
+    }
+  },
+  "07_train.py": {
+    "file": "/home/pak/Documents/src_baocao/02_src/07_train.py",
+    "n_lines": 1494,
+    "imports": [
+      "__future__.annotations",
+      "argparse",
+      "json",
+      "math",
+      "time",
+      "datetime.datetime",
+      "pathlib.Path",
+      "typing.Dict",
+      "typing.List",
+      "typing.Tuple",
+      "numpy",
+      "pandas",
+      "torch",
+      "torch.nn",
+      "torch.utils.data.DataLoader",
+      "torch.utils.data.Dataset",
+      "config",
+      "train_utils"
+    ],
+    "classes": [
+      {
+        "name": "FusionAblationDataset",
+        "bases": [
+          "Dataset"
+        ],
+        "lineno": 435,
+        "end_lineno": 463,
+        "methods": [
+          {
+            "name": "__init__",
+            "args": [
+              "self",
+              "X_bin",
+              "X_offset",
+              "X_cont",
+              "X_mask",
+              "y"
+            ],
+            "lineno": 445,
+            "end_lineno": 457
+          },
+          {
+            "name": "__len__",
+            "args": [
+              "self"
+            ],
+            "lineno": 459,
+            "end_lineno": 460
+          },
+          {
+            "name": "__getitem__",
+            "args": [
+              "self",
+              "idx"
+            ],
+            "lineno": 462,
+            "end_lineno": 463
+          }
+        ]
+      },
+      {
+        "name": "BaseValueEmbedding",
+        "bases": [
+          "nn.Module"
+        ],
+        "lineno": 466,
+        "end_lineno": 487,
+        "methods": [
+          {
+            "name": "__init__",
+            "args": [
+              "self",
+              "num_bins",
+              "n_features",
+              "value_dim",
+              "feature_dim",
+              "init_std"
+            ],
+            "lineno": 467,
+            "end_lineno": 478
+          },
+          {
+            "name": "add_feature_embedding",
+            "args": [
+              "self",
+              "value_emb"
+            ],
+            "lineno": 480,
+            "end_lineno": 484
+          },
+          {
+            "name": "gate_summary",
+            "args": [
+              "self"
+            ],
+            "lineno": 486,
+            "end_lineno": 487
+          }
+        ]
+      },
+      {
+        "name": "D0OffsetInterpolationEmbedding",
+        "bases": [
+          "BaseValueEmbedding"
+        ],
+        "lineno": 490,
+        "end_lineno": 506,
+        "methods": [
+          {
+            "name": "__init__",
+            "args": [
+              "self",
+              "num_bins",
+              "n_features",
+              "value_dim",
+              "feature_dim"
+            ],
+            "lineno": 491,
+            "end_lineno": 494
+          },
+          {
+            "name": "local_interp",
+            "args": [
+              "self",
+              "bin_ids",
+              "offset"
+            ],
+            "lineno": 496,
+            "end_lineno": 501
+          },
+          {
+            "name": "forward",
+            "args": [
+              "self",
+              "bin_ids",
+              "values"
+            ],
+            "lineno": 503,
+            "end_lineno": 506
+          }
+        ]
+      },
+      {
+        "name": "D1InterpRawScalarConcatEmbedding",
+        "bases": [
+          "BaseValueEmbedding"
+        ],
+        "lineno": 509,
+        "end_lineno": 531,
+        "methods": [
+          {
+            "name": "__init__",
+            "args": [
+              "self",
+              "num_bins",
+              "n_features",
+              "value_dim",
+              "feature_dim"
+            ],
+            "lineno": 510,
+            "end_lineno": 516
+          },
+          {
+            "name": "local_interp",
+            "args": [
+              "self",
+              "bin_ids",
+              "offset"
+            ],
+            "lineno": 518,
+            "end_lineno": 523
+          },
+          {
+            "name": "forward",
+            "args": [
+              "self",
+              "bin_ids",
+              "values"
+            ],
+            "lineno": 525,
+            "end_lineno": 531
+          }
+        ]
+      },
+      {
+        "name": "D2D4D5InterpProjectGateConcatEmbedding",
+        "bases": [
+          "BaseValueEmbedding"
+        ],
+        "lineno": 534,
+        "end_lineno": 598,
+        "methods": [
+          {
+            "name": "__init__",
+            "args": [
+              "self",
+              "num_bins",
+              "n_features",
+              "value_dim",
+              "feature_dim",
+              "gate_init"
+            ],
+            "lineno": 544,
+            "end_lineno": 565
+          },
+          {
+            "name": "local_interp",
+            "args": [
+              "self",
+              "bin_ids",
+              "offset"
+            ],
+            "lineno": 567,
+            "end_lineno": 572
+          },
+          {
+            "name": "forward",
+            "args": [
+              "self",
+              "bin_ids",
+              "values"
+            ],
+            "lineno": 574,
+            "end_lineno": 588
+          },
+          {
+            "name": "gate_summary",
+            "args": [
+              "self"
+            ],
+            "lineno": 590,
+            "end_lineno": 598
+          }
+        ]
+      },
+      {
+        "name": "D3InterpRawFiLMEmbedding",
+        "bases": [
+          "BaseValueEmbedding"
+        ],
+        "lineno": 601,
+        "end_lineno": 656,
+        "methods": [
+          {
+            "name": "__init__",
+            "args": [
+              "self",
+              "num_bins",
+              "n_features",
+              "value_dim",
+              "feature_dim",
+              "gate_init"
+            ],
+            "lineno": 608,
+            "end_lineno": 621
+          },
+          {
+            "name": "local_interp",
+            "args": [
+              "self",
+              "bin_ids",
+              "offset"
+            ],
+            "lineno": 623,
+            "end_lineno": 628
+          },
+          {
+            "name": "forward",
+            "args": [
+              "self",
+              "bin_ids",
+              "values"
+            ],
+            "lineno": 630,
+            "end_lineno": 646
+          },
+          {
+            "name": "gate_summary",
+            "args": [
+              "self"
+            ],
+            "lineno": 648,
+            "end_lineno": 656
+          }
+        ]
+      },
+      {
+        "name": "D6ProjectedOffsetAddEmbedding",
+        "bases": [
+          "BaseValueEmbedding"
+        ],
+        "lineno": 659,
+        "end_lineno": 675,
+        "methods": [
+          {
+            "name": "__init__",
+            "args": [
+              "self",
+              "num_bins",
+              "n_features",
+              "value_dim",
+              "feature_dim"
+            ],
+            "lineno": 660,
+            "end_lineno": 669
+          },
+          {
+            "name": "forward",
+            "args": [
+              "self",
+              "bin_ids",
+              "values"
+            ],
+            "lineno": 671,
+            "end_lineno": 675
+          }
+        ]
+      },
+      {
+        "name": "D7ProjectedOffsetConcatEmbedding",
+        "bases": [
+          "BaseValueEmbedding"
+        ],
+        "lineno": 678,
+        "end_lineno": 699,
+        "methods": [
+          {
+            "name": "__init__",
+            "args": [
+              "self",
+              "num_bins",
+              "n_features",
+              "value_dim",
+              "feature_dim"
+            ],
+            "lineno": 679,
+            "end_lineno": 691
+          },
+          {
+            "name": "forward",
+            "args": [
+              "self",
+              "bin_ids",
+              "values"
+            ],
+            "lineno": 693,
+            "end_lineno": 699
+          }
+        ]
+      },
+      {
+        "name": "FusionAblationTransformer",
+        "bases": [
+          "nn.Module"
+        ],
+        "lineno": 702,
+        "end_lineno": 812,
+        "methods": [
+          {
+            "name": "__init__",
+            "args": [
+              "self",
+              "run_id",
+              "num_bins",
+              "n_features",
+              "num_classes",
+              "value_dim",
+              "feature_dim",
+              "hidden_dim",
+              "num_layers",
+              "num_heads",
+              "dropout",
+              "classifier_hidden_dim",
+              "classifier_dropout",
+              "norm_first",
+              "gate_init",
+              "activation"
+            ],
+            "lineno": 703,
+            "end_lineno": 780
+          },
+          {
+            "name": "forward",
+            "args": [
+              "self",
+              "tokens",
+              "z_values",
+              "return_info"
+            ],
+            "lineno": 782,
+            "end_lineno": 807
+          },
+          {
+            "name": "embedding_extra_summary",
+            "args": [
+              "self"
+            ],
+            "lineno": 809,
+            "end_lineno": 812
+          }
+        ]
+      }
+    ],
+    "functions": [
+      {
+        "name": "cfg",
+        "args": [
+          "name",
+          "default"
+        ],
+        "lineno": 43,
+        "end_lineno": 44
+      },
+      {
+        "name": "parse_args",
+        "args": [],
+        "lineno": 47,
+        "end_lineno": 101
+      },
+      {
+        "name": "repo_root",
+        "args": [],
+        "lineno": 156,
+        "end_lineno": 157
+      },
+      {
+        "name": "resolve_path",
+        "args": [
+          "path_like"
+        ],
+        "lineno": 160,
+        "end_lineno": 165
+      },
+      {
+        "name": "default_model_dir",
+        "args": [],
+        "lineno": 168,
+        "end_lineno": 171
+      },
+      {
+        "name": "default_dataset_path",
+        "args": [
+          "K",
+          "B"
+        ],
+        "lineno": 174,
+        "end_lineno": 179
+      },
+      {
+        "name": "default_metadata_path",
+        "args": [
+          "K",
+          "B"
+        ],
+        "lineno": 182,
+        "end_lineno": 185
+      },
+      {
+        "name": "resolve_repo_path",
+        "args": [
+          "path_from_meta",
+          "fallback_relative"
+        ],
+        "lineno": 188,
+        "end_lineno": 207
+      },
+      {
+        "name": "load_dataset",
+        "args": [
+          "dataset_path",
+          "metadata_path"
+        ],
+        "lineno": 210,
+        "end_lineno": 224
+      },
+      {
+        "name": "load_z_preprocessed",
+        "args": [
+          "meta"
+        ],
+        "lineno": 227,
+        "end_lineno": 265
+      },
+      {
+        "name": "resolve_raw_paths",
+        "args": [
+          "args"
+        ],
+        "lineno": 268,
+        "end_lineno": 277
+      },
+      {
+        "name": "load_raw_scaled",
+        "args": [
+          "meta",
+          "args"
+        ],
+        "lineno": 280,
+        "end_lineno": 330
+      },
+      {
+        "name": "load_continuous_for_run",
+        "args": [
+          "spec",
+          "meta",
+          "args",
+          "train_shape",
+          "val_shape"
+        ],
+        "lineno": 333,
+        "end_lineno": 351
+      },
+      {
+        "name": "build_selective_mask",
+        "args": [
+          "X_train_bin",
+          "X_val_bin",
+          "X_train_cont",
+          "num_bins",
+          "tail_frac",
+          "wide_quantile"
+        ],
+        "lineno": 354,
+        "end_lineno": 432
+      },
+      {
+        "name": "strip_eval",
+        "args": [
+          "report"
+        ],
+        "lineno": 815,
+        "end_lineno": 817
+      },
+      {
+        "name": "malware_avg_f1",
+        "args": [
+          "report"
+        ],
+        "lineno": 820,
+        "end_lineno": 825
+      },
+      {
+        "name": "make_boundary_bin_diagnostics",
+        "args": [
+          "X_bin",
+          "X_offset",
+          "num_bins",
+          "feature_names",
+          "split_name"
+        ],
+        "lineno": 830,
+        "end_lineno": 886
+      },
+      {
+        "name": "make_embedding_runtime_diagnostics",
+        "args": [
+          "model",
+          "X_bin",
+          "X_offset",
+          "X_cont",
+          "X_mask",
+          "device",
+          "max_rows"
+        ],
+        "lineno": 889,
+        "end_lineno": 978
+      },
+      {
+        "name": "make_diagnosis_summary",
+        "args": [
+          "args",
+          "spec",
+          "best_epoch",
+          "best_train",
+          "best_val",
+          "metadata",
+          "continuous_info",
+          "selective_info",
+          "boundary_data_diagnostics",
+          "embedding_runtime_diagnostics",
+          "model"
+        ],
+        "lineno": 980,
+        "end_lineno": 1080
+      },
+      {
+        "name": "main",
+        "args": [],
+        "lineno": 1083,
+        "end_lineno": 1489
+      }
+    ],
+    "flags": {
+      "uses_torch": true,
+      "uses_nn_module": true,
+      "contains_transformer": true,
+      "contains_cls": true,
+      "contains_forward": true,
+      "contains_focal": false,
+      "contains_class_weight": true,
+      "contains_scheduler": true,
+      "contains_checkpoint": true
+    }
+  },
+  "train_utils.py": {
+    "file": "/home/pak/Documents/src_baocao/02_src/train_utils.py",
+    "n_lines": 291,
+    "imports": [
+      "__future__.annotations",
+      "csv",
+      "json",
+      "math",
+      "random",
+      "pathlib.Path",
+      "typing.Dict",
+      "typing.List",
+      "numpy",
+      "torch",
+      "torch.nn",
+      "torch.utils.data.DataLoader"
+    ],
+    "classes": [],
+    "functions": [
+      {
+        "name": "set_seed",
+        "args": [
+          "seed"
+        ],
+        "lineno": 23,
+        "end_lineno": 31
+      },
+      {
+        "name": "pick_device",
+        "args": [
+          "device_arg"
+        ],
+        "lineno": 33,
+        "end_lineno": 36
+      },
+      {
+        "name": "compute_class_weights",
+        "args": [
+          "y_train",
+          "num_classes"
+        ],
+        "lineno": 38,
+        "end_lineno": 47
+      },
+      {
+        "name": "confusion_matrix_np",
+        "args": [
+          "y_true",
+          "y_pred",
+          "num_classes"
+        ],
+        "lineno": 49,
+        "end_lineno": 54
+      },
+      {
+        "name": "metrics_from_predictions",
+        "args": [
+          "y_true",
+          "y_pred",
+          "num_classes",
+          "label_names"
+        ],
+        "lineno": 56,
+        "end_lineno": 107
+      },
+      {
+        "name": "evaluate",
+        "args": [
+          "model",
+          "loader",
+          "criterion",
+          "device",
+          "num_classes",
+          "label_names",
+          "collect_probs"
+        ],
+        "lineno": 109,
+        "end_lineno": 160
+      },
+      {
+        "name": "compute_epoch_lr",
+        "args": [
+          "base_lr",
+          "epoch",
+          "total_epochs",
+          "scheduler_name",
+          "warmup_epochs",
+          "min_lr_ratio"
+        ],
+        "lineno": 162,
+        "end_lineno": 203
+      },
+      {
+        "name": "set_optimizer_lr",
+        "args": [
+          "optimizer",
+          "lr"
+        ],
+        "lineno": 205,
+        "end_lineno": 207
+      },
+      {
+        "name": "train_one_epoch",
+        "args": [
+          "model",
+          "loader",
+          "criterion",
+          "optimizer",
+          "device",
+          "grad_clip_norm"
+        ],
+        "lineno": 209,
+        "end_lineno": 240
+      },
+      {
+        "name": "write_history_csv",
+        "args": [
+          "path",
+          "rows"
+        ],
+        "lineno": 242,
+        "end_lineno": 249
+      },
+      {
+        "name": "write_confusion_outputs",
+        "args": [
+          "out_dir",
+          "prefix",
+          "report",
+          "label_names"
+        ],
+        "lineno": 251,
+        "end_lineno": 272
+      },
+      {
+        "name": "write_predictions_csv",
+        "args": [
+          "path",
+          "y_true",
+          "y_pred",
+          "confidence",
+          "label_names"
+        ],
+        "lineno": 274,
+        "end_lineno": 287
+      },
+      {
+        "name": "save_json",
+        "args": [
+          "path",
+          "obj"
+        ],
+        "lineno": 289,
+        "end_lineno": 290
+      }
+    ],
+    "flags": {
+      "uses_torch": true,
+      "uses_nn_module": true,
+      "contains_transformer": false,
+      "contains_cls": false,
+      "contains_forward": false,
+      "contains_focal": false,
+      "contains_class_weight": true,
+      "contains_scheduler": true,
+      "contains_checkpoint": false
+    }
+  },
+  "config.py": {
+    "file": "/home/pak/Documents/src_baocao/02_src/config.py",
+    "n_lines": 292,
+    "imports": [
+      "__future__.annotations",
+      "pathlib.Path",
+      "typing.Any",
+      "typing.Dict",
+      "typing.List"
+    ],
+    "classes": [],
+    "functions": [
+      {
+        "name": "token_diag_json_path",
+        "args": [
+          "K"
+        ],
+        "lineno": 190,
+        "end_lineno": 191
+      },
+      {
+        "name": "token_diag_summary_csv_path",
+        "args": [
+          "K"
+        ],
+        "lineno": 193,
+        "end_lineno": 194
+      },
+      {
+        "name": "preprocess_train_csv_path",
+        "args": [
+          "K"
+        ],
+        "lineno": 196,
+        "end_lineno": 197
+      },
+      {
+        "name": "preprocess_val_csv_path",
+        "args": [
+          "K"
+        ],
+        "lineno": 199,
+        "end_lineno": 200
+      },
+      {
+        "name": "preprocess_policy_json_path",
+        "args": [
+          "K"
+        ],
+        "lineno": 202,
+        "end_lineno": 203
+      },
+      {
+        "name": "preprocess_report_json_path",
+        "args": [
+          "K"
+        ],
+        "lineno": 205,
+        "end_lineno": 206
+      },
+      {
+        "name": "bin_diag_json_path",
+        "args": [
+          "K",
+          "B"
+        ],
+        "lineno": 208,
+        "end_lineno": 209
+      },
+      {
+        "name": "bin_diag_csv_path",
+        "args": [
+          "K",
+          "B"
+        ],
+        "lineno": 211,
+        "end_lineno": 212
+      },
+      {
+        "name": "rank_uniform_diag_json_path",
+        "args": [
+          "K",
+          "B"
+        ],
+        "lineno": 214,
+        "end_lineno": 215
+      },
+      {
+        "name": "rank_uniform_diag_csv_path",
+        "args": [
+          "K",
+          "B"
+        ],
+        "lineno": 217,
+        "end_lineno": 218
+      },
+      {
+        "name": "build_mixed_dir",
+        "args": [
+          "K",
+          "B"
+        ],
+        "lineno": 220,
+        "end_lineno": 221
+      },
+      {
+        "name": "build_rank_uniform_dir",
+        "args": [
+          "K",
+          "B"
+        ],
+        "lineno": 223,
+        "end_lineno": 224
+      },
+      {
+        "name": "token_artifact_npz_path",
+        "args": [
+          "K",
+          "B"
+        ],
+        "lineno": 226,
+        "end_lineno": 227
+      },
+      {
+        "name": "rank_uniform_token_artifact_npz_path",
+        "args": [
+          "K",
+          "B"
+        ],
+        "lineno": 229,
+        "end_lineno": 230
+      },
+      {
+        "name": "build_c2_dir",
+        "args": [
+          "K",
+          "B"
+        ],
+        "lineno": 232,
+        "end_lineno": 233
+      },
+      {
+        "name": "cfg",
+        "args": [
+          "name",
+          "default"
+        ],
+        "lineno": 247,
+        "end_lineno": 248
+      },
+      {
+        "name": "ensure_dirs",
+        "args": [],
+        "lineno": 252,
+        "end_lineno": 266
+      },
+      {
+        "name": "as_posix",
+        "args": [
+          "p"
+        ],
+        "lineno": 268,
+        "end_lineno": 269
+      },
+      {
+        "name": "repo_summary",
+        "args": [],
+        "lineno": 271,
+        "end_lineno": 287
+      }
+    ],
+    "flags": {
+      "uses_torch": false,
+      "uses_nn_module": false,
+      "contains_transformer": true,
+      "contains_cls": false,
+      "contains_forward": false,
+      "contains_focal": false,
+      "contains_class_weight": true,
+      "contains_scheduler": true,
+      "contains_checkpoint": true
+    }
+  },
+  "05_build_dataset.py": {
+    "file": "/home/pak/Documents/src_baocao/02_src/05_build_dataset.py",
+    "n_lines": 331,
+    "imports": [
+      "__future__.annotations",
+      "argparse",
+      "json",
+      "pathlib.Path",
+      "typing.Dict",
+      "typing.List",
+      "numpy",
+      "pandas",
+      "config"
+    ],
+    "classes": [],
+    "functions": [
+      {
+        "name": "parse_args",
+        "args": [],
+        "lineno": 37,
+        "end_lineno": 46
+      },
+      {
+        "name": "as_str_list",
+        "args": [
+          "arr"
+        ],
+        "lineno": 49,
+        "end_lineno": 50
+      },
+      {
+        "name": "load_json",
+        "args": [
+          "path"
+        ],
+        "lineno": 53,
+        "end_lineno": 54
+      },
+      {
+        "name": "save_json",
+        "args": [
+          "obj",
+          "path"
+        ],
+        "lineno": 57,
+        "end_lineno": 60
+      },
+      {
+        "name": "entropy_norm_from_counts",
+        "args": [
+          "counts"
+        ],
+        "lineno": 63,
+        "end_lineno": 70
+      },
+      {
+        "name": "bin_stats",
+        "args": [
+          "bin_ids",
+          "raw_unique",
+          "num_bins"
+        ],
+        "lineno": 73,
+        "end_lineno": 89
+      },
+      {
+        "name": "nearest_unique_index",
+        "args": [
+          "values",
+          "uniq"
+        ],
+        "lineno": 92,
+        "end_lineno": 102
+      },
+      {
+        "name": "make_discrete_compact",
+        "args": [
+          "train_values",
+          "val_values",
+          "num_bins"
+        ],
+        "lineno": 105,
+        "end_lineno": 123
+      },
+      {
+        "name": "choose_c2_strategy",
+        "args": [
+          "raw_unique",
+          "A_stats",
+          "B_stats"
+        ],
+        "lineno": 126,
+        "end_lineno": 160
+      },
+      {
+        "name": "main",
+        "args": [],
+        "lineno": 163,
+        "end_lineno": 326
+      }
+    ],
+    "flags": {
+      "uses_torch": false,
+      "uses_nn_module": false,
+      "contains_transformer": false,
+      "contains_cls": false,
+      "contains_forward": false,
+      "contains_focal": false,
+      "contains_class_weight": false,
+      "contains_scheduler": false,
+      "contains_checkpoint": false
+    }
+  },
+  "04_tokenization.py": {
+    "file": "/home/pak/Documents/src_baocao/02_src/04_tokenization.py",
+    "n_lines": 522,
+    "imports": [
+      "__future__.annotations",
+      "argparse",
+      "json",
+      "pathlib.Path",
+      "typing.Dict",
+      "typing.List",
+      "typing.Sequence",
+      "typing.Tuple",
+      "numpy",
+      "pandas",
+      "config"
+    ],
+    "classes": [],
+    "functions": [
+      {
+        "name": "parse_args",
+        "args": [],
+        "lineno": 42,
+        "end_lineno": 57
+      },
+      {
+        "name": "as_str_list",
+        "args": [
+          "arr"
+        ],
+        "lineno": 60,
+        "end_lineno": 61
+      },
+      {
+        "name": "clean_label",
+        "args": [
+          "x"
+        ],
+        "lineno": 64,
+        "end_lineno": 65
+      },
+      {
+        "name": "load_feature_order",
+        "args": [
+          "policy_path"
+        ],
+        "lineno": 68,
+        "end_lineno": 76
+      },
+      {
+        "name": "validate_split",
+        "args": [
+          "name",
+          "df",
+          "features",
+          "label_col"
+        ],
+        "lineno": 79,
+        "end_lineno": 91
+      },
+      {
+        "name": "build_label_mapping",
+        "args": [
+          "train_labels"
+        ],
+        "lineno": 94,
+        "end_lineno": 99
+      },
+      {
+        "name": "encode_labels",
+        "args": [
+          "labels",
+          "mapping",
+          "split_name"
+        ],
+        "lineno": 102,
+        "end_lineno": 114
+      },
+      {
+        "name": "load_diag",
+        "args": [
+          "diag_path"
+        ],
+        "lineno": 117,
+        "end_lineno": 120
+      },
+      {
+        "name": "choose_strategy",
+        "args": [
+          "z_train",
+          "diag_row",
+          "min_unique_for_quantile",
+          "min_dominant_reduction",
+          "min_entropy_delta"
+        ],
+        "lineno": 123,
+        "end_lineno": 144
+      },
+      {
+        "name": "make_uniform_edges",
+        "args": [
+          "num_bins"
+        ],
+        "lineno": 147,
+        "end_lineno": 148
+      },
+      {
+        "name": "make_quantile_edges",
+        "args": [
+          "values",
+          "num_bins"
+        ],
+        "lineno": 151,
+        "end_lineno": 160
+      },
+      {
+        "name": "assign_bin_offset",
+        "args": [
+          "values",
+          "edges"
+        ],
+        "lineno": 163,
+        "end_lineno": 182
+      },
+      {
+        "name": "entropy_norm_from_counts",
+        "args": [
+          "counts"
+        ],
+        "lineno": 185,
+        "end_lineno": 192
+      },
+      {
+        "name": "rank_uniform_bin_offset",
+        "args": [
+          "z",
+          "num_bins"
+        ],
+        "lineno": 195,
+        "end_lineno": 203
+      },
+      {
+        "name": "piecewise_unique_rank_fit_transform",
+        "args": [
+          "train_values",
+          "val_values"
+        ],
+        "lineno": 206,
+        "end_lineno": 225
+      },
+      {
+        "name": "rank_feature_diag",
+        "args": [
+          "feature",
+          "raw_train",
+          "z_train",
+          "bin_ids",
+          "num_bins"
+        ],
+        "lineno": 228,
+        "end_lineno": 253
+      },
+      {
+        "name": "build_current_mixed_A",
+        "args": [
+          "args"
+        ],
+        "lineno": 256,
+        "end_lineno": 393
+      },
+      {
+        "name": "build_rank_uniform_B",
+        "args": [
+          "args",
+          "A_npz_path",
+          "A_meta_path"
+        ],
+        "lineno": 396,
+        "end_lineno": 504
+      },
+      {
+        "name": "main",
+        "args": [],
+        "lineno": 507,
+        "end_lineno": 517
+      }
+    ],
+    "flags": {
+      "uses_torch": false,
+      "uses_nn_module": false,
+      "contains_transformer": false,
+      "contains_cls": false,
+      "contains_forward": false,
+      "contains_focal": false,
+      "contains_class_weight": false,
+      "contains_scheduler": false,
+      "contains_checkpoint": false
+    }
+  },
+  "02_embedding.py": {
+    "file": "/home/pak/Documents/src_baocao/02_src/02_embedding.py",
+    "n_lines": 126,
+    "imports": [
+      "__future__.annotations",
+      "typing.Dict",
+      "torch",
+      "torch.nn"
+    ],
+    "classes": [
+      {
+        "name": "D3OffsetFiLMEmbedding",
+        "bases": [
+          "nn.Module"
+        ],
+        "lineno": 32,
+        "end_lineno": 125,
+        "methods": [
+          {
+            "name": "__init__",
+            "args": [
+              "self",
+              "num_bins",
+              "n_features",
+              "value_dim",
+              "feature_dim",
+              "gate_init",
+              "init_std"
+            ],
+            "lineno": 33,
+            "end_lineno": 82
+          },
+          {
+            "name": "local_interp",
+            "args": [
+              "self",
+              "bin_ids",
+              "offset"
+            ],
+            "lineno": 84,
+            "end_lineno": 89
+          },
+          {
+            "name": "forward",
+            "args": [
+              "self",
+              "tokens",
+              "values"
+            ],
+            "lineno": 91,
+            "end_lineno": 115
+          },
+          {
+            "name": "gate_summary",
+            "args": [
+              "self"
+            ],
+            "lineno": 117,
+            "end_lineno": 125
+          }
+        ]
+      }
+    ],
+    "functions": [],
+    "flags": {
+      "uses_torch": true,
+      "uses_nn_module": true,
+      "contains_transformer": false,
+      "contains_cls": false,
+      "contains_forward": true,
+      "contains_focal": false,
+      "contains_class_weight": false,
+      "contains_scheduler": false,
+      "contains_checkpoint": false
+    }
+  }
+}

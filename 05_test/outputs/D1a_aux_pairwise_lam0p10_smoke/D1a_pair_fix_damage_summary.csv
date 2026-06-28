@@ -1,0 +1,10 @@
+pair,direction,pair_true_n,baseline_direct_wrong_n,fixed_direct_wrong_n,fix_rate_among_direct_wrong,baseline_correct_pair_n,correct_to_wrong_damage_n,damage_rate_among_pair_correct,net_pair_gain_n
+Ransomware<->Spyware,BIDIRECTIONAL,354,37,0,0.0,275,275,1.0,-275
+Ransomware<->Spyware,Ransomware->Spyware,177,28,0,0.0,126,126,1.0,-126
+Ransomware<->Spyware,Spyware->Ransomware,177,9,0,0.0,149,149,1.0,-149
+Ransomware<->Trojan,BIDIRECTIONAL,334,48,25,0.5208333333333334,240,126,0.525,-101
+Ransomware<->Trojan,Ransomware->Trojan,177,23,0,0.0,126,126,1.0,-126
+Ransomware<->Trojan,Trojan->Ransomware,157,25,25,1.0,114,0,0.0,25
+Spyware<->Trojan,BIDIRECTIONAL,334,37,18,0.4864864864864865,263,149,0.5665399239543726,-131
+Spyware<->Trojan,Spyware->Trojan,177,19,0,0.0,149,149,1.0,-149
+Spyware<->Trojan,Trojan->Spyware,157,18,18,1.0,114,0,0.0,18

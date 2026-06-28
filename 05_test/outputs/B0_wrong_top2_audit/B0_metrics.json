@@ -1,0 +1,11 @@
+{
+  "n_total": 11720,
+  "n_correct": 10242,
+  "n_wrong": 1478,
+  "accuracy_from_predictions": 0.8738907849829352,
+  "wrong_true_in_top2": 1103,
+  "wrong_true_in_top2_rate": 0.7462787550744249,
+  "top2_source": "explicit_top_columns:top1_label,top2_label",
+  "true_col": "true_label",
+  "pred_col": "pred_label"
+}

@@ -1,0 +1,83 @@
+{
+  "stage": "C3_external_pairwise_reranker_diagnostic",
+  "purpose": "Validation OOF diagnostic for pairwise reranking direction; not official final model.",
+  "inputs": {
+    "pred_csv": "/home/pak/Documents/src_baocao/05_test/outputs/B1_cls_pairwise_signal/val_cls_predictions_with_probs.csv",
+    "cls_npz": "/home/pak/Documents/src_baocao/05_test/outputs/B1_cls_pairwise_signal/val_cls_embeddings.npz",
+    "score_prefix": "prob_"
+  },
+  "labels": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "hard_pairs": [
+    "Ransomware<->Spyware",
+    "Ransomware<->Trojan",
+    "Spyware<->Trojan"
+  ],
+  "feature_sets": [
+    "cls",
+    "probs",
+    "logprobs",
+    "cls__probs",
+    "cls__logprobs"
+  ],
+  "confidence_thresholds": [
+    0.5,
+    0.55,
+    0.6,
+    0.7,
+    0.8
+  ],
+  "cv_folds": 5,
+  "random_state": 42,
+  "cls_info": {
+    "path": "/home/pak/Documents/src_baocao/05_test/outputs/B1_cls_pairwise_signal/val_cls_embeddings.npz",
+    "keys": [
+      "cls_embeddings",
+      "logits",
+      "probs",
+      "y_true",
+      "y_pred",
+      "top1_id",
+      "top2_id",
+      "top1_score",
+      "top2_score",
+      "sample_index",
+      "label_names"
+    ],
+    "cls_key": "cls_embeddings",
+    "cls_shape": [
+      11720,
+      128
+    ],
+    "label_names": [
+      "Benign",
+      "Ransomware",
+      "Spyware",
+      "Trojan"
+    ]
+  },
+  "gate": {
+    "result": "MIXED — reranker improves metrics but damage or gain size needs caution",
+    "reason": "Best policy `probs__rerank_top2_pair_conf_ge_0.5` has positive delta_macro_f1=0.0014, wrong_to_correct=34, correct_to_wrong=24, net_gain=10. The improvement exists but may not be stable enough for direct adoption.",
+    "recommendation": "Inspect pair-level damage before deciding Phase D. Prefer safer constraints or a training-time auxiliary head.",
+    "best_policy": "probs__rerank_top2_pair_conf_ge_0.5",
+    "best_feature_set": "probs",
+    "best_confidence_threshold": 0.5,
+    "best_accuracy": 0.8747440273037542,
+    "best_macro_f1": 0.8115292617320812,
+    "best_weighted_f1": 0.8744455686679126,
+    "best_delta_accuracy": 0.0008532423208190698,
+    "best_delta_macro_f1": 0.001434980606937697,
+    "best_delta_weighted_f1": 0.0009713693332468187,
+    "best_wrong_to_correct_n": 34,
+    "best_correct_to_wrong_n": 24,
+    "best_net_gain_n": 10,
+    "best_damage_ratio": 0.7058823529411765,
+    "guardrail": "C3 is a validation OOF diagnostic. It measures whether a pairwise correction direction is promising, but it is not an official final model and not a train/val/test-proven solution."
+  },
+  "baseline_guardrail": "This diagnostic should be run on 03_outputs/06_model baseline 0.81, not the separate 0.817 model until the best direction is chosen."
+}

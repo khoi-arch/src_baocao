@@ -1,0 +1,4 @@
+pair,class_a,class_b,status,centroid_distance_euclidean,centroid_distance_cosine
+Ransomware<->Spyware,Ransomware,Spyware,ok,12.427281379699707,1.2310395240783691
+Ransomware<->Trojan,Ransomware,Trojan,ok,11.151407241821289,1.0184522867202759
+Spyware<->Trojan,Spyware,Trojan,ok,11.482206344604492,1.0709630250930786

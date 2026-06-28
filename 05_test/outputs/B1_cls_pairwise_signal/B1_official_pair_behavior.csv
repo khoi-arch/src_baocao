@@ -1,0 +1,4 @@
+pair,class_a,class_b,n_true_pair,official_correct_n,official_correct_rate,official_pair_confusion_n,official_pair_confusion_rate,official_pred_outside_pair_n,official_pred_outside_pair_rate,true_in_top2_n,true_in_top2_rate
+Ransomware<->Spyware,Ransomware,Spyware,3963,2997,0.7562452687358062,446,0.11254100428967953,520,0.13121372697451425,3708,0.9356548069644209
+Ransomware<->Trojan,Ransomware,Trojan,3856,2745,0.7118775933609959,596,0.1545643153526971,515,0.13355809128630705,3591,0.9312759336099585
+Spyware<->Trojan,Spyware,Trojan,3901,3030,0.7767239169443733,430,0.11022814662906948,441,0.11304793642655729,3679,0.9430915149961548

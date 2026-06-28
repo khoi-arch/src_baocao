@@ -1,0 +1,1552 @@
+{
+  "repo_root": "/home/pak/Documents/src_baocao",
+  "model_py": "/home/pak/Documents/src_baocao/02_src/06_model.py",
+  "config_json": "/home/pak/Documents/src_baocao/03_outputs/06_model/config.json",
+  "dataset_npz": "/home/pak/Documents/src_baocao/03_outputs/05_dataset/dataset.npz",
+  "device_used": "cpu",
+  "import_ok": true,
+  "init_signature": "(self, *, num_bins: 'int', n_features: 'int', num_classes: 'int', value_dim: 'int | None' = None, feature_dim: 'int | None' = None, hidden_dim: 'int | None' = None, num_layers: 'int | None' = None, num_heads: 'int | None' = None, dropout: 'float | None' = None, classifier_hidden_dim: 'int | None' = None, classifier_dropout: 'float | None' = None, norm_first: 'bool | None' = None, gate_init: 'float | None' = None, activation: 'str | None' = None) -> 'None'",
+  "forward_signature": "(self, tokens: 'torch.Tensor', values: 'torch.Tensor', *, return_info: 'bool' = False)",
+  "batch_info": {
+    "batch_size": 8,
+    "n_features": 55,
+    "num_classes": 4,
+    "num_bins": 512,
+    "label_names": [
+      "Benign",
+      "Ransomware",
+      "Spyware",
+      "Trojan"
+    ]
+  },
+  "instantiate_ok": true,
+  "constructor_kwargs": {
+    "num_bins": "512",
+    "n_features": "55",
+    "num_classes": "4",
+    "value_dim": "32",
+    "feature_dim": "32",
+    "hidden_dim": "128",
+    "num_layers": "3",
+    "num_heads": "4",
+    "dropout": "0.1",
+    "classifier_hidden_dim": "128",
+    "classifier_dropout": "0.1",
+    "norm_first": "True",
+    "gate_init": "0.0"
+  },
+  "constructor_decisions": [
+    {
+      "param": "num_bins",
+      "used": true,
+      "value": "512"
+    },
+    {
+      "param": "n_features",
+      "used": true,
+      "value": "55"
+    },
+    {
+      "param": "num_classes",
+      "used": true,
+      "value": "4"
+    },
+    {
+      "param": "value_dim",
+      "used": true,
+      "value": "32"
+    },
+    {
+      "param": "feature_dim",
+      "used": true,
+      "value": "32"
+    },
+    {
+      "param": "hidden_dim",
+      "used": true,
+      "value": "128"
+    },
+    {
+      "param": "num_layers",
+      "used": true,
+      "value": "3"
+    },
+    {
+      "param": "num_heads",
+      "used": true,
+      "value": "4"
+    },
+    {
+      "param": "dropout",
+      "used": true,
+      "value": "0.1"
+    },
+    {
+      "param": "classifier_hidden_dim",
+      "used": true,
+      "value": "128"
+    },
+    {
+      "param": "classifier_dropout",
+      "used": true,
+      "value": "0.1"
+    },
+    {
+      "param": "norm_first",
+      "used": true,
+      "value": "True"
+    },
+    {
+      "param": "gate_init",
+      "used": true,
+      "value": "0.0"
+    },
+    {
+      "param": "activation",
+      "used": false,
+      "value": "default=None"
+    }
+  ],
+  "forward_attempts": [
+    {
+      "attempt": "tokens_long__values_offset_cont_mask__return_info_False",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tensor",
+        "shape": [
+          8,
+          4
+        ],
+        "dtype": "torch.float32",
+        "requires_grad": false
+      }
+    },
+    {
+      "attempt": "tokens_long__values_offset_cont_mask__return_info_True",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tuple",
+        "len": 2,
+        "items": [
+          {
+            "type": "tensor",
+            "shape": [
+              8,
+              4
+            ],
+            "dtype": "torch.float32",
+            "requires_grad": false
+          },
+          {
+            "type": "dict",
+            "keys": [
+              "cell_emb_shape",
+              "encoded_shape",
+              "cls_out_shape",
+              "cell_dim",
+              "num_bins",
+              "run_id",
+              "spec"
+            ],
+            "items": {
+              "cell_emb_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "55"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "64"
+                  }
+                ]
+              },
+              "encoded_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "56"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cls_out_shape": {
+                "type": "tuple",
+                "len": 2,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cell_dim": {
+                "type": "int",
+                "repr": "64"
+              },
+              "num_bins": {
+                "type": "int",
+                "repr": "512"
+              },
+              "run_id": {
+                "type": "str",
+                "repr": "'D3'"
+              },
+              "spec": {
+                "type": "dict",
+                "keys": [
+                  "run_id",
+                  "local",
+                  "continuous_source",
+                  "fusion",
+                  "description"
+                ],
+                "items": {
+                  "run_id": {
+                    "type": "str",
+                    "repr": "'D3'"
+                  },
+                  "local": {
+                    "type": "str",
+                    "repr": "'offset_interpolation'"
+                  },
+                  "continuous_source": {
+                    "type": "str",
+                    "repr": "'raw_scaled'"
+                  },
+                  "fusion": {
+                    "type": "str",
+                    "repr": "'raw_film'"
+                  },
+                  "description": {
+                    "type": "str",
+                    "repr": "'offset interpolation + raw FiLM/multiply fusion'"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "attempt": "tokens_long__values_offset_cont_bin_norm__return_info_False",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tensor",
+        "shape": [
+          8,
+          4
+        ],
+        "dtype": "torch.float32",
+        "requires_grad": false
+      }
+    },
+    {
+      "attempt": "tokens_long__values_offset_cont_bin_norm__return_info_True",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tuple",
+        "len": 2,
+        "items": [
+          {
+            "type": "tensor",
+            "shape": [
+              8,
+              4
+            ],
+            "dtype": "torch.float32",
+            "requires_grad": false
+          },
+          {
+            "type": "dict",
+            "keys": [
+              "cell_emb_shape",
+              "encoded_shape",
+              "cls_out_shape",
+              "cell_dim",
+              "num_bins",
+              "run_id",
+              "spec"
+            ],
+            "items": {
+              "cell_emb_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "55"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "64"
+                  }
+                ]
+              },
+              "encoded_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "56"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cls_out_shape": {
+                "type": "tuple",
+                "len": 2,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cell_dim": {
+                "type": "int",
+                "repr": "64"
+              },
+              "num_bins": {
+                "type": "int",
+                "repr": "512"
+              },
+              "run_id": {
+                "type": "str",
+                "repr": "'D3'"
+              },
+              "spec": {
+                "type": "dict",
+                "keys": [
+                  "run_id",
+                  "local",
+                  "continuous_source",
+                  "fusion",
+                  "description"
+                ],
+                "items": {
+                  "run_id": {
+                    "type": "str",
+                    "repr": "'D3'"
+                  },
+                  "local": {
+                    "type": "str",
+                    "repr": "'offset_interpolation'"
+                  },
+                  "continuous_source": {
+                    "type": "str",
+                    "repr": "'raw_scaled'"
+                  },
+                  "fusion": {
+                    "type": "str",
+                    "repr": "'raw_film'"
+                  },
+                  "description": {
+                    "type": "str",
+                    "repr": "'offset interpolation + raw FiLM/multiply fusion'"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "attempt": "tokens_long__values_bin_offset_cont__return_info_False",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tensor",
+        "shape": [
+          8,
+          4
+        ],
+        "dtype": "torch.float32",
+        "requires_grad": false
+      }
+    },
+    {
+      "attempt": "tokens_long__values_bin_offset_cont__return_info_True",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tuple",
+        "len": 2,
+        "items": [
+          {
+            "type": "tensor",
+            "shape": [
+              8,
+              4
+            ],
+            "dtype": "torch.float32",
+            "requires_grad": false
+          },
+          {
+            "type": "dict",
+            "keys": [
+              "cell_emb_shape",
+              "encoded_shape",
+              "cls_out_shape",
+              "cell_dim",
+              "num_bins",
+              "run_id",
+              "spec"
+            ],
+            "items": {
+              "cell_emb_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "55"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "64"
+                  }
+                ]
+              },
+              "encoded_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "56"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cls_out_shape": {
+                "type": "tuple",
+                "len": 2,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cell_dim": {
+                "type": "int",
+                "repr": "64"
+              },
+              "num_bins": {
+                "type": "int",
+                "repr": "512"
+              },
+              "run_id": {
+                "type": "str",
+                "repr": "'D3'"
+              },
+              "spec": {
+                "type": "dict",
+                "keys": [
+                  "run_id",
+                  "local",
+                  "continuous_source",
+                  "fusion",
+                  "description"
+                ],
+                "items": {
+                  "run_id": {
+                    "type": "str",
+                    "repr": "'D3'"
+                  },
+                  "local": {
+                    "type": "str",
+                    "repr": "'offset_interpolation'"
+                  },
+                  "continuous_source": {
+                    "type": "str",
+                    "repr": "'raw_scaled'"
+                  },
+                  "fusion": {
+                    "type": "str",
+                    "repr": "'raw_film'"
+                  },
+                  "description": {
+                    "type": "str",
+                    "repr": "'offset interpolation + raw FiLM/multiply fusion'"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "attempt": "tokens_long__values_bin_norm_offset_cont__return_info_False",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tensor",
+        "shape": [
+          8,
+          4
+        ],
+        "dtype": "torch.float32",
+        "requires_grad": false
+      }
+    },
+    {
+      "attempt": "tokens_long__values_bin_norm_offset_cont__return_info_True",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tuple",
+        "len": 2,
+        "items": [
+          {
+            "type": "tensor",
+            "shape": [
+              8,
+              4
+            ],
+            "dtype": "torch.float32",
+            "requires_grad": false
+          },
+          {
+            "type": "dict",
+            "keys": [
+              "cell_emb_shape",
+              "encoded_shape",
+              "cls_out_shape",
+              "cell_dim",
+              "num_bins",
+              "run_id",
+              "spec"
+            ],
+            "items": {
+              "cell_emb_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "55"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "64"
+                  }
+                ]
+              },
+              "encoded_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "56"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cls_out_shape": {
+                "type": "tuple",
+                "len": 2,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cell_dim": {
+                "type": "int",
+                "repr": "64"
+              },
+              "num_bins": {
+                "type": "int",
+                "repr": "512"
+              },
+              "run_id": {
+                "type": "str",
+                "repr": "'D3'"
+              },
+              "spec": {
+                "type": "dict",
+                "keys": [
+                  "run_id",
+                  "local",
+                  "continuous_source",
+                  "fusion",
+                  "description"
+                ],
+                "items": {
+                  "run_id": {
+                    "type": "str",
+                    "repr": "'D3'"
+                  },
+                  "local": {
+                    "type": "str",
+                    "repr": "'offset_interpolation'"
+                  },
+                  "continuous_source": {
+                    "type": "str",
+                    "repr": "'raw_scaled'"
+                  },
+                  "fusion": {
+                    "type": "str",
+                    "repr": "'raw_film'"
+                  },
+                  "description": {
+                    "type": "str",
+                    "repr": "'offset interpolation + raw FiLM/multiply fusion'"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "attempt": "tokens_long__values_cont_offset_mask__return_info_False",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tensor",
+        "shape": [
+          8,
+          4
+        ],
+        "dtype": "torch.float32",
+        "requires_grad": false
+      }
+    },
+    {
+      "attempt": "tokens_long__values_cont_offset_mask__return_info_True",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tuple",
+        "len": 2,
+        "items": [
+          {
+            "type": "tensor",
+            "shape": [
+              8,
+              4
+            ],
+            "dtype": "torch.float32",
+            "requires_grad": false
+          },
+          {
+            "type": "dict",
+            "keys": [
+              "cell_emb_shape",
+              "encoded_shape",
+              "cls_out_shape",
+              "cell_dim",
+              "num_bins",
+              "run_id",
+              "spec"
+            ],
+            "items": {
+              "cell_emb_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "55"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "64"
+                  }
+                ]
+              },
+              "encoded_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "56"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cls_out_shape": {
+                "type": "tuple",
+                "len": 2,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cell_dim": {
+                "type": "int",
+                "repr": "64"
+              },
+              "num_bins": {
+                "type": "int",
+                "repr": "512"
+              },
+              "run_id": {
+                "type": "str",
+                "repr": "'D3'"
+              },
+              "spec": {
+                "type": "dict",
+                "keys": [
+                  "run_id",
+                  "local",
+                  "continuous_source",
+                  "fusion",
+                  "description"
+                ],
+                "items": {
+                  "run_id": {
+                    "type": "str",
+                    "repr": "'D3'"
+                  },
+                  "local": {
+                    "type": "str",
+                    "repr": "'offset_interpolation'"
+                  },
+                  "continuous_source": {
+                    "type": "str",
+                    "repr": "'raw_scaled'"
+                  },
+                  "fusion": {
+                    "type": "str",
+                    "repr": "'raw_film'"
+                  },
+                  "description": {
+                    "type": "str",
+                    "repr": "'offset interpolation + raw FiLM/multiply fusion'"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "attempt": "tokens_float__values_offset_cont_mask__return_info_False",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tensor",
+        "shape": [
+          8,
+          4
+        ],
+        "dtype": "torch.float32",
+        "requires_grad": false
+      }
+    },
+    {
+      "attempt": "tokens_float__values_offset_cont_mask__return_info_True",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tuple",
+        "len": 2,
+        "items": [
+          {
+            "type": "tensor",
+            "shape": [
+              8,
+              4
+            ],
+            "dtype": "torch.float32",
+            "requires_grad": false
+          },
+          {
+            "type": "dict",
+            "keys": [
+              "cell_emb_shape",
+              "encoded_shape",
+              "cls_out_shape",
+              "cell_dim",
+              "num_bins",
+              "run_id",
+              "spec"
+            ],
+            "items": {
+              "cell_emb_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "55"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "64"
+                  }
+                ]
+              },
+              "encoded_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "56"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cls_out_shape": {
+                "type": "tuple",
+                "len": 2,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cell_dim": {
+                "type": "int",
+                "repr": "64"
+              },
+              "num_bins": {
+                "type": "int",
+                "repr": "512"
+              },
+              "run_id": {
+                "type": "str",
+                "repr": "'D3'"
+              },
+              "spec": {
+                "type": "dict",
+                "keys": [
+                  "run_id",
+                  "local",
+                  "continuous_source",
+                  "fusion",
+                  "description"
+                ],
+                "items": {
+                  "run_id": {
+                    "type": "str",
+                    "repr": "'D3'"
+                  },
+                  "local": {
+                    "type": "str",
+                    "repr": "'offset_interpolation'"
+                  },
+                  "continuous_source": {
+                    "type": "str",
+                    "repr": "'raw_scaled'"
+                  },
+                  "fusion": {
+                    "type": "str",
+                    "repr": "'raw_film'"
+                  },
+                  "description": {
+                    "type": "str",
+                    "repr": "'offset interpolation + raw FiLM/multiply fusion'"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "attempt": "tokens_float__values_offset_cont_bin_norm__return_info_False",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tensor",
+        "shape": [
+          8,
+          4
+        ],
+        "dtype": "torch.float32",
+        "requires_grad": false
+      }
+    },
+    {
+      "attempt": "tokens_float__values_offset_cont_bin_norm__return_info_True",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tuple",
+        "len": 2,
+        "items": [
+          {
+            "type": "tensor",
+            "shape": [
+              8,
+              4
+            ],
+            "dtype": "torch.float32",
+            "requires_grad": false
+          },
+          {
+            "type": "dict",
+            "keys": [
+              "cell_emb_shape",
+              "encoded_shape",
+              "cls_out_shape",
+              "cell_dim",
+              "num_bins",
+              "run_id",
+              "spec"
+            ],
+            "items": {
+              "cell_emb_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "55"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "64"
+                  }
+                ]
+              },
+              "encoded_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "56"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cls_out_shape": {
+                "type": "tuple",
+                "len": 2,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cell_dim": {
+                "type": "int",
+                "repr": "64"
+              },
+              "num_bins": {
+                "type": "int",
+                "repr": "512"
+              },
+              "run_id": {
+                "type": "str",
+                "repr": "'D3'"
+              },
+              "spec": {
+                "type": "dict",
+                "keys": [
+                  "run_id",
+                  "local",
+                  "continuous_source",
+                  "fusion",
+                  "description"
+                ],
+                "items": {
+                  "run_id": {
+                    "type": "str",
+                    "repr": "'D3'"
+                  },
+                  "local": {
+                    "type": "str",
+                    "repr": "'offset_interpolation'"
+                  },
+                  "continuous_source": {
+                    "type": "str",
+                    "repr": "'raw_scaled'"
+                  },
+                  "fusion": {
+                    "type": "str",
+                    "repr": "'raw_film'"
+                  },
+                  "description": {
+                    "type": "str",
+                    "repr": "'offset interpolation + raw FiLM/multiply fusion'"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "attempt": "tokens_float__values_bin_offset_cont__return_info_False",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tensor",
+        "shape": [
+          8,
+          4
+        ],
+        "dtype": "torch.float32",
+        "requires_grad": false
+      }
+    },
+    {
+      "attempt": "tokens_float__values_bin_offset_cont__return_info_True",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tuple",
+        "len": 2,
+        "items": [
+          {
+            "type": "tensor",
+            "shape": [
+              8,
+              4
+            ],
+            "dtype": "torch.float32",
+            "requires_grad": false
+          },
+          {
+            "type": "dict",
+            "keys": [
+              "cell_emb_shape",
+              "encoded_shape",
+              "cls_out_shape",
+              "cell_dim",
+              "num_bins",
+              "run_id",
+              "spec"
+            ],
+            "items": {
+              "cell_emb_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "55"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "64"
+                  }
+                ]
+              },
+              "encoded_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "56"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cls_out_shape": {
+                "type": "tuple",
+                "len": 2,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cell_dim": {
+                "type": "int",
+                "repr": "64"
+              },
+              "num_bins": {
+                "type": "int",
+                "repr": "512"
+              },
+              "run_id": {
+                "type": "str",
+                "repr": "'D3'"
+              },
+              "spec": {
+                "type": "dict",
+                "keys": [
+                  "run_id",
+                  "local",
+                  "continuous_source",
+                  "fusion",
+                  "description"
+                ],
+                "items": {
+                  "run_id": {
+                    "type": "str",
+                    "repr": "'D3'"
+                  },
+                  "local": {
+                    "type": "str",
+                    "repr": "'offset_interpolation'"
+                  },
+                  "continuous_source": {
+                    "type": "str",
+                    "repr": "'raw_scaled'"
+                  },
+                  "fusion": {
+                    "type": "str",
+                    "repr": "'raw_film'"
+                  },
+                  "description": {
+                    "type": "str",
+                    "repr": "'offset interpolation + raw FiLM/multiply fusion'"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "attempt": "tokens_float__values_bin_norm_offset_cont__return_info_False",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tensor",
+        "shape": [
+          8,
+          4
+        ],
+        "dtype": "torch.float32",
+        "requires_grad": false
+      }
+    },
+    {
+      "attempt": "tokens_float__values_bin_norm_offset_cont__return_info_True",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tuple",
+        "len": 2,
+        "items": [
+          {
+            "type": "tensor",
+            "shape": [
+              8,
+              4
+            ],
+            "dtype": "torch.float32",
+            "requires_grad": false
+          },
+          {
+            "type": "dict",
+            "keys": [
+              "cell_emb_shape",
+              "encoded_shape",
+              "cls_out_shape",
+              "cell_dim",
+              "num_bins",
+              "run_id",
+              "spec"
+            ],
+            "items": {
+              "cell_emb_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "55"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "64"
+                  }
+                ]
+              },
+              "encoded_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "56"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cls_out_shape": {
+                "type": "tuple",
+                "len": 2,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cell_dim": {
+                "type": "int",
+                "repr": "64"
+              },
+              "num_bins": {
+                "type": "int",
+                "repr": "512"
+              },
+              "run_id": {
+                "type": "str",
+                "repr": "'D3'"
+              },
+              "spec": {
+                "type": "dict",
+                "keys": [
+                  "run_id",
+                  "local",
+                  "continuous_source",
+                  "fusion",
+                  "description"
+                ],
+                "items": {
+                  "run_id": {
+                    "type": "str",
+                    "repr": "'D3'"
+                  },
+                  "local": {
+                    "type": "str",
+                    "repr": "'offset_interpolation'"
+                  },
+                  "continuous_source": {
+                    "type": "str",
+                    "repr": "'raw_scaled'"
+                  },
+                  "fusion": {
+                    "type": "str",
+                    "repr": "'raw_film'"
+                  },
+                  "description": {
+                    "type": "str",
+                    "repr": "'offset interpolation + raw FiLM/multiply fusion'"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "attempt": "tokens_float__values_cont_offset_mask__return_info_False",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tensor",
+        "shape": [
+          8,
+          4
+        ],
+        "dtype": "torch.float32",
+        "requires_grad": false
+      }
+    },
+    {
+      "attempt": "tokens_float__values_cont_offset_mask__return_info_True",
+      "ok": true,
+      "has_logits": true,
+      "has_cls_like": false,
+      "output": {
+        "type": "tuple",
+        "len": 2,
+        "items": [
+          {
+            "type": "tensor",
+            "shape": [
+              8,
+              4
+            ],
+            "dtype": "torch.float32",
+            "requires_grad": false
+          },
+          {
+            "type": "dict",
+            "keys": [
+              "cell_emb_shape",
+              "encoded_shape",
+              "cls_out_shape",
+              "cell_dim",
+              "num_bins",
+              "run_id",
+              "spec"
+            ],
+            "items": {
+              "cell_emb_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "55"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "64"
+                  }
+                ]
+              },
+              "encoded_shape": {
+                "type": "tuple",
+                "len": 3,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "56"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cls_out_shape": {
+                "type": "tuple",
+                "len": 2,
+                "items": [
+                  {
+                    "type": "int",
+                    "repr": "8"
+                  },
+                  {
+                    "type": "int",
+                    "repr": "128"
+                  }
+                ]
+              },
+              "cell_dim": {
+                "type": "int",
+                "repr": "64"
+              },
+              "num_bins": {
+                "type": "int",
+                "repr": "512"
+              },
+              "run_id": {
+                "type": "str",
+                "repr": "'D3'"
+              },
+              "spec": {
+                "type": "dict",
+                "keys": [
+                  "run_id",
+                  "local",
+                  "continuous_source",
+                  "fusion",
+                  "description"
+                ],
+                "items": {
+                  "run_id": {
+                    "type": "str",
+                    "repr": "'D3'"
+                  },
+                  "local": {
+                    "type": "str",
+                    "repr": "'offset_interpolation'"
+                  },
+                  "continuous_source": {
+                    "type": "str",
+                    "repr": "'raw_scaled'"
+                  },
+                  "fusion": {
+                    "type": "str",
+                    "repr": "'raw_film'"
+                  },
+                  "description": {
+                    "type": "str",
+                    "repr": "'offset interpolation + raw FiLM/multiply fusion'"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "result": "FAIL — input-space pairwise signal appears weak",
+  "reason": "Best representation `raw_scaled__bin_norm__offset` has mean macro-F1=0.6695, mean AUC=0.7425. This suggests the subtype overlap is already severe before CLS.",
+  "best_representation": "raw_scaled__bin_norm__offset",
+  "best_mean_macro_f1": 0.6694725369899631,
+  "best_min_macro_f1": 0.662262275285213,
+  "best_mean_auc": 0.7424738068349553,
+  "thresholds": {
+    "pass_mean_macro_f1": 0.8,
+    "pass_min_macro_f1": 0.75,
+    "pass_mean_auc": 0.88,
+    "mixed_mean_macro_f1": 0.72,
+    "mixed_mean_auc": 0.8
+  },
+  "note": "Gate is diagnostic only, not an official validation metric."
+}

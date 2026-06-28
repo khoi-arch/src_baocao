@@ -1,0 +1,8 @@
+file,path,exists,size_bytes,n_lines
+06_model.py,/home/pak/Documents/src_baocao/02_src/06_model.py,True,5686,159
+07_train.py,/home/pak/Documents/src_baocao/02_src/07_train.py,True,61195,1494
+train_utils.py,/home/pak/Documents/src_baocao/02_src/train_utils.py,True,9403,291
+config.py,/home/pak/Documents/src_baocao/02_src/config.py,True,9136,292
+05_build_dataset.py,/home/pak/Documents/src_baocao/02_src/05_build_dataset.py,True,15236,331
+04_tokenization.py,/home/pak/Documents/src_baocao/02_src/04_tokenization.py,True,24309,522
+02_embedding.py,/home/pak/Documents/src_baocao/02_src/02_embedding.py,True,4637,126

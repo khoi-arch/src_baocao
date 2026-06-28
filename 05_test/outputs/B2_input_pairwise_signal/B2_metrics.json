@@ -1,0 +1,54 @@
+{
+  "main_metrics": {
+    "n_total": 11720,
+    "n_features": 55,
+    "num_bins": 512,
+    "label_names": [
+      "Benign",
+      "Ransomware",
+      "Spyware",
+      "Trojan"
+    ],
+    "pairs": [
+      "Ransomware<->Spyware",
+      "Ransomware<->Trojan",
+      "Spyware<->Trojan"
+    ],
+    "representations_tested": [
+      "raw_scaled",
+      "bin_norm",
+      "offset",
+      "bin_plus_offset_norm",
+      "bin_norm__offset",
+      "raw_scaled__bin_plus_offset_norm",
+      "raw_scaled__bin_norm__offset",
+      "d3_scalar_input"
+    ],
+    "raw_scaled_source": "raw_scaled_from_raw_csv",
+    "cv_folds": 5,
+    "random_state": 42
+  },
+  "gate": {
+    "result": "FAIL — input-space pairwise signal appears weak",
+    "reason": "Best representation `raw_scaled__bin_norm__offset` has mean macro-F1=0.6695, mean AUC=0.7425. This suggests the subtype overlap is already severe before CLS.",
+    "best_representation": "raw_scaled__bin_norm__offset",
+    "best_mean_macro_f1": 0.6694725369899631,
+    "best_min_macro_f1": 0.662262275285213,
+    "best_mean_auc": 0.7424738068349553,
+    "thresholds": {
+      "pass_mean_macro_f1": 0.8,
+      "pass_min_macro_f1": 0.75,
+      "pass_mean_auc": 0.88,
+      "mixed_mean_macro_f1": 0.72,
+      "mixed_mean_auc": 0.8
+    },
+    "note": "Gate is diagnostic only, not an official validation metric."
+  },
+  "inputs": {
+    "dataset_npz": "/home/pak/Documents/src_baocao/03_outputs/05_dataset/dataset.npz",
+    "metadata_json": "/home/pak/Documents/src_baocao/03_outputs/05_dataset/metadata.json",
+    "train_raw": "/home/pak/Documents/src_baocao/01_split/train_raw.csv",
+    "val_raw": "/home/pak/Documents/src_baocao/01_split/val_raw.csv",
+    "pred_csv": "/home/pak/Documents/src_baocao/05_test/outputs/B1_cls_pairwise_signal/val_cls_predictions_with_probs.csv"
+  }
+}

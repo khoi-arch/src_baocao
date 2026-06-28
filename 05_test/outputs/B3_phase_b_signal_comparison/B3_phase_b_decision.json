@@ -1,0 +1,21 @@
+{
+  "result": "PHASE_B_PASS — bottleneck is not primarily preprocessing/input-linear separability",
+  "diagnosis": "B0 shows high wrong-sample true-in-top2 coverage, B1 shows usable CLS pairwise signal, and B2 shows weak input-space linear signal. CLS is substantially stronger than raw/token/offset linear baselines. Therefore the current evidence points to ambiguous subtype ranking / hard-pair decision in CLS/logit space, not a first-priority preprocessing/tokenization failure.",
+  "recommended_next_phase": "Proceed to Phase C diagnostic rerank or logit/CLS hard-pair correction tests before Phase D model changes.",
+  "b0": {
+    "available": true,
+    "n_wrong": 1478,
+    "wrong_true_in_top2": 1103,
+    "wrong_true_in_top2_rate": 0.7462787550744249,
+    "top2_accuracy": null
+  },
+  "b1_gate_result": "PASS — CLS has usable pairwise signal",
+  "b2_gate_result": "FAIL — input-space pairwise signal appears weak",
+  "comparison_stats": {
+    "mean_delta_cls_minus_input_macro_f1": 0.16633365817905074,
+    "min_delta_cls_minus_input_macro_f1": 0.13629782191468887,
+    "mean_delta_cls_minus_input_auc": 0.17034852311986268,
+    "min_delta_cls_minus_input_auc": 0.1514847198351661
+  },
+  "important_guardrail": "Phase B is diagnostic only. It does not prove a final fix. Any rerank/auxiliary-head/margin-loss idea must still be validated as an isolated Phase C/D test."
+}

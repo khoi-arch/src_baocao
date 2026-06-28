@@ -1,0 +1,12 @@
+{
+  "result": "MIXED — true label is often top-2 but margins may be large",
+  "reason": "wrong_true_in_top2_rate=0.7463, but median margin among wrong-top2=0.5042. A simple rerank may be hard; Phase C should first test diagnostic upper/lower-bound rerank.",
+  "n_wrong": 1478,
+  "wrong_true_in_top2_rate": 0.7462787550744249,
+  "wrong_top2_median_pred_minus_true_margin": 0.5041737407445908,
+  "wrong_top2_rate_margin_le_small_threshold": 0.1359927470534905,
+  "wrong_top2_rate_margin_le_moderate_threshold": 0.26473254759746145,
+  "small_margin_threshold": 0.1,
+  "moderate_margin_threshold": 0.2,
+  "guardrail": "C1 is diagnostic only. It does not perform reranking or modify model outputs."
+}

@@ -1,0 +1,14 @@
+{
+  "source": "raw_scaled_from_raw_csv",
+  "scale": "train_only_minmax_linear_clip_val",
+  "train_raw": "/home/pak/Documents/src_baocao/01_split/train_raw.csv",
+  "val_raw": "/home/pak/Documents/src_baocao/01_split/val_raw.csv",
+  "n_constant_features": 3,
+  "constant_features": [
+    "pslist.nprocs64bit",
+    "handles.nport",
+    "svcscan.interactive_process_services"
+  ],
+  "val_min": 0.0,
+  "val_max": 1.0
+}

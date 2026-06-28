@@ -1,0 +1,52 @@
+{
+  "main_metrics": {
+    "n_total": 11720,
+    "n_correct": 10242,
+    "n_wrong": 1478,
+    "accuracy_from_predictions": 0.873890785,
+    "top2_accuracy": 0.968003413,
+    "wrong_true_in_top2": 1103,
+    "wrong_true_in_top2_rate": 0.7462787551,
+    "wrong_top2_pred_minus_true_median": 0.5041737407,
+    "wrong_top2_pred_minus_true_q75": 0.8927814923,
+    "wrong_top2_pred_minus_true_rate_le_0.1": 0.1359927471,
+    "wrong_top2_pred_minus_true_rate_le_0.2": 0.2647325476,
+    "label_names": [
+      "Spyware",
+      "Benign",
+      "Trojan",
+      "Ransomware"
+    ],
+    "probability_columns": {
+      "Spyware": "prob_Spyware",
+      "Benign": "prob_Benign",
+      "Trojan": "prob_Trojan",
+      "Ransomware": "prob_Ransomware"
+    },
+    "hard_pairs": [
+      "Ransomware<->Spyware",
+      "Ransomware<->Trojan",
+      "Spyware<->Trojan"
+    ]
+  },
+  "gate": {
+    "result": "MIXED — true label is often top-2 but margins may be large",
+    "reason": "wrong_true_in_top2_rate=0.7463, but median margin among wrong-top2=0.5042. A simple rerank may be hard; Phase C should first test diagnostic upper/lower-bound rerank.",
+    "n_wrong": 1478,
+    "wrong_true_in_top2_rate": 0.7462787550744249,
+    "wrong_top2_median_pred_minus_true_margin": 0.5041737407445908,
+    "wrong_top2_rate_margin_le_small_threshold": 0.1359927470534905,
+    "wrong_top2_rate_margin_le_moderate_threshold": 0.26473254759746145,
+    "small_margin_threshold": 0.1,
+    "moderate_margin_threshold": 0.2,
+    "guardrail": "C1 is diagnostic only. It does not perform reranking or modify model outputs."
+  },
+  "inputs": {
+    "pred_csv": "/home/pak/Documents/src_baocao/05_test/outputs/B0_wrong_top2_audit/val_predictions_with_probs.csv",
+    "score_prefix": "prob_"
+  },
+  "notes": {
+    "phase": "C1 diagnostic only",
+    "baseline": "Use 03_outputs/06_model baseline currently under analysis; not the 0.817 model unless explicitly rerun later."
+  }
+}

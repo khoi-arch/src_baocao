@@ -1,0 +1,4 @@
+pair,best_representation,dim,best_macro_f1,best_auc,best_balanced_accuracy,n_samples
+Ransomware<->Spyware,d3_scalar_input,220,0.6645810185086414,0.7281559902145682,0.6648941779534345,3963
+Ransomware<->Trojan,raw_scaled__bin_norm__offset,165,0.662262275285213,0.732370743090498,0.6644792306597317,3856
+Spyware<->Trojan,raw_scaled__bin_norm__offset,165,0.6818340769927278,0.7669642265284928,0.6845456425051847,3901

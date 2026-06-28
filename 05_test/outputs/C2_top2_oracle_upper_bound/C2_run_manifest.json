@@ -1,0 +1,44 @@
+{
+  "stage": "C2_top2_oracle_upper_bound",
+  "purpose": "Oracle upper-bound simulation for top-2 correction; diagnostic only.",
+  "inputs": {
+    "pred_csv": "/home/pak/Documents/src_baocao/05_test/outputs/B0_wrong_top2_audit/val_predictions_with_probs.csv",
+    "score_prefix": "prob_"
+  },
+  "labels": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "hard_pairs": [
+    "Ransomware<->Spyware",
+    "Ransomware<->Trojan",
+    "Spyware<->Trojan"
+  ],
+  "thresholds": [
+    0.05,
+    0.1,
+    0.2,
+    0.3,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "gate": {
+    "result": "MIXED — large oracle headroom, but simple margin-bounded correction captures limited gain",
+    "reason": "All-top2 oracle macro-F1=0.9523 (delta=0.1423), but margin<=0.2 oracle delta_macro_f1=0.0378. This means recoverable errors exist, but many require more than a small-margin rule.",
+    "recommendation": "Proceed to C3 external CLS/logit pairwise reranker diagnostic. Do not rely on a simple margin-threshold rule.",
+    "original_accuracy": 0.8738907849829352,
+    "original_macro_f1": 0.8100942811251435,
+    "oracle_all_top2_accuracy": 0.9680034129692833,
+    "oracle_all_top2_macro_f1": 0.9523446693856183,
+    "oracle_all_top2_delta_accuracy": 0.09411262798634812,
+    "oracle_all_top2_delta_macro_f1": 0.14225038826047487,
+    "margin_le_0.2_delta_macro_f1": 0.037801608887495286,
+    "margin_le_0.3_delta_macro_f1": 0.04969680532114218,
+    "margin_le_0.5_delta_macro_f1": 0.07079154255332532,
+    "guardrail": "C2 is an oracle simulation only; it is not a deployable reranker and does not change baseline files."
+  },
+  "baseline_guardrail": "This run uses the current 03_outputs/06_model baseline under analysis, not the separate 0.817 model."
+}
