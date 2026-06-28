@@ -1526,6 +1526,9 @@ def main() -> None:
         criterion = nn.CrossEntropyLoss()
         class_weights_log = None
 
+    # Ensure all modules, including D1a aux heads attached after model creation, are on the selected device.
+    model.to(device)
+
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=float(args.lr),
