@@ -817,10 +817,13 @@ class FusionAblationTransformer(nn.Module):
             "run_id": self.run_id,
             "spec": self.spec,
         }
-        if return_cls and return_info:
-            return logits, cls_out, info
-        if return_cls:
-            return logits, cls_out
+
+        if return_pair_tokens:
+            token_out = encoded[:, 1:, :]
+            if return_info:
+                return logits, cls_out, token_out, info
+            return logits, cls_out, token_out
+
         if return_info:
             return logits, info
         return logits
@@ -865,10 +868,11 @@ def make_d1b_aux_head(hidden_dim: int, aux_hidden_dim: int, aux_dropout: float) 
 def attach_d1b_aux_heads(
     model: nn.Module,
     *,
+    label_names: List[str] | None = None,
     hidden_dim: int,
     aux_hidden_dim: int,
     aux_dropout: float,
-) -> None:
+) -> Dict[str, object]:
     """
     D1b branch: pair-specific attention pooling over token representations.
 
@@ -880,10 +884,19 @@ def attach_d1b_aux_heads(
 
     Main classifier remains official CLS -> classifier.
     """
+    # Prefer label IDs from metadata/official label_names to avoid hard-coding silently.
+    # Fallback to the current official order: Benign=0, Ransomware=1, Spyware=2, Trojan=3.
+    cleaned_names = [str(x).strip() for x in (label_names or [])]
+    label_to_id = {name: i for i, name in enumerate(cleaned_names)}
+    fallback = {"Benign": 0, "Ransomware": 1, "Spyware": 2, "Trojan": 3}
+
+    def _id(name: str) -> int:
+        return int(label_to_id.get(name, fallback[name]))
+
     model.d1b_pair_id_names = [
-        ("Ransomware__vs__Spyware", 1, 2, "Ransomware", "Spyware"),
-        ("Ransomware__vs__Trojan", 1, 3, "Ransomware", "Trojan"),
-        ("Spyware__vs__Trojan", 2, 3, "Spyware", "Trojan"),
+        ("Ransomware__vs__Spyware", _id("Ransomware"), _id("Spyware"), "Ransomware", "Spyware"),
+        ("Ransomware__vs__Trojan", _id("Ransomware"), _id("Trojan"), "Ransomware", "Trojan"),
+        ("Spyware__vs__Trojan", _id("Spyware"), _id("Trojan"), "Spyware", "Trojan"),
     ]
 
     model.d1b_pair_queries = nn.ParameterDict()
@@ -907,6 +920,18 @@ def attach_d1b_aux_heads(
                 nn.LayerNorm(int(hidden_dim)),
                 nn.Linear(int(hidden_dim), 1),
             )
+
+    return {
+        "enabled": True,
+        "type": "pair_specific_attention_pooling",
+        "pairs": [
+            {"pair_key": key, "id_a": int(ida), "id_b": int(idb), "label_a": a, "label_b": b}
+            for key, ida, idb, a, b in model.d1b_pair_id_names
+        ],
+        "hidden_dim": int(hidden_dim),
+        "aux_hidden_dim": int(aux_hidden_dim),
+        "aux_dropout": float(aux_dropout),
+    }
 
 
 def d1b_pair_attention_logits(model: nn.Module, token_out: torch.Tensor) -> Dict[str, torch.Tensor]:
@@ -999,7 +1024,7 @@ def train_one_epoch_d1b(
         y = y.to(device, non_blocking=True)
 
         optimizer.zero_grad(set_to_none=True)
-        logits, cls_out = model(X, z_values=Z, return_pair_tokens=True)
+        logits, cls_out, token_out = model(X, z_values=Z, return_pair_tokens=True)
         main_loss = criterion(logits, y)
         pair_loss, _ = d1b_aux_pairwise_loss(model, token_out, y)
         loss = main_loss + float(lambda_pair) * pair_loss
