@@ -132,45 +132,116 @@ def detect_class_names_from_report(run_dir: Path) -> List[str]:
 
 
 def normalize_predictions(df: pd.DataFrame, names: List[str]) -> pd.DataFrame:
-    d = df.copy()
+    """
+    Robustly normalize prediction CSVs.
 
-    # Detect y_true/y_pred columns.
+    Handles both formats:
+      - numeric labels: y_true/y_pred = 0,1,2,3
+      - class-name labels: y_true/y_pred or true_class/pred_class = Benign/Ransomware/...
+      - mixed output files that already contain true_name/pred_name
+    """
+    d = df.copy()
+    name_to_id = {str(n): i for i, n in enumerate(names)}
+
+    def series_to_label_id(s: pd.Series, fallback_name_series: Optional[pd.Series] = None, colname: str = "") -> pd.Series:
+        # First try numeric conversion.
+        num = pd.to_numeric(s, errors="coerce")
+        if num.notna().mean() >= 0.95:
+            return num
+
+        # Then try mapping class-name strings from the same column.
+        mapped = s.map(lambda x: name_to_id.get(clean_class(x), np.nan))
+        if mapped.notna().mean() >= 0.95:
+            return mapped
+
+        # Then try fallback name column.
+        if fallback_name_series is not None:
+            mapped2 = fallback_name_series.map(lambda x: name_to_id.get(clean_class(x), np.nan))
+            if mapped2.notna().mean() >= 0.95:
+                return mapped2
+
+        # Last resort: if values look like floats stored as strings with spaces, numeric again after strip.
+        stripped = s.map(lambda x: clean_class(x))
+        num2 = pd.to_numeric(stripped, errors="coerce")
+        if num2.notna().mean() >= 0.95:
+            return num2
+
+        bad_preview = s.head(10).tolist()
+        raise ValueError(
+            f"Cannot normalize label column {colname}. "
+            f"Known names={names}. Preview={bad_preview}. Columns={list(d.columns)}"
+        )
+
+    def label_id_to_name(x):
+        if pd.isna(x):
+            return ""
+        ix = int(x)
+        return names[ix] if 0 <= ix < len(names) else str(ix)
+
+    # Detect true/pred source columns.
     true_candidates = ["y_true", "true_label", "label", "target", "true"]
     pred_candidates = ["y_pred", "pred_label", "prediction", "pred", "predicted"]
+
     true_col = next((c for c in true_candidates if c in d.columns), None)
     pred_col = next((c for c in pred_candidates if c in d.columns), None)
 
-    if true_col is None and "true_class" in d.columns:
-        d["true_name"] = d["true_class"].map(clean_class)
-        d["y_true"] = d["true_name"].map({n: i for i, n in enumerate(names)})
-    elif true_col is not None:
-        d["y_true"] = pd.to_numeric(d[true_col], errors="coerce")
-    else:
-        raise ValueError(f"Cannot detect true label column in predictions: {list(d.columns)}")
+    # Some files use true_class/pred_class names only.
+    fallback_true_name = d["true_class"] if "true_class" in d.columns else (d["true_name"] if "true_name" in d.columns else None)
+    fallback_pred_name = d["pred_class"] if "pred_class" in d.columns else (d["pred_name"] if "pred_name" in d.columns else None)
 
-    if pred_col is None and "pred_class" in d.columns:
-        d["pred_name"] = d["pred_class"].map(clean_class)
-        d["y_pred"] = d["pred_name"].map({n: i for i, n in enumerate(names)})
-    elif pred_col is not None:
-        d["y_pred"] = pd.to_numeric(d[pred_col], errors="coerce")
+    if true_col is None:
+        if fallback_true_name is None:
+            raise ValueError(f"Cannot detect true label/name column in predictions: {list(d.columns)}")
+        d["y_true"] = series_to_label_id(fallback_true_name, colname="true_name/fallback")
     else:
-        raise ValueError(f"Cannot detect pred label column in predictions: {list(d.columns)}")
+        d["y_true"] = series_to_label_id(d[true_col], fallback_true_name, colname=true_col)
 
-    if "true_name" not in d.columns:
-        if "true_class" in d.columns:
-            d["true_name"] = d["true_class"].map(clean_class)
-        else:
-            d["true_name"] = d["y_true"].map(lambda x: names[int(x)] if pd.notna(x) and int(x) < len(names) else str(x))
-    if "pred_name" not in d.columns:
-        if "pred_class" in d.columns:
-            d["pred_name"] = d["pred_class"].map(clean_class)
-        else:
-            d["pred_name"] = d["y_pred"].map(lambda x: names[int(x)] if pd.notna(x) and int(x) < len(names) else str(x))
+    if pred_col is None:
+        if fallback_pred_name is None:
+            raise ValueError(f"Cannot detect pred label/name column in predictions: {list(d.columns)}")
+        d["y_pred"] = series_to_label_id(fallback_pred_name, colname="pred_name/fallback")
+    else:
+        d["y_pred"] = series_to_label_id(d[pred_col], fallback_pred_name, colname=pred_col)
+
+    # At this point no NaNs should remain.
+    if d["y_true"].isna().any() or d["y_pred"].isna().any():
+        bad = d[d["y_true"].isna() | d["y_pred"].isna()].head(10)
+        raise ValueError(
+            "NaN labels remain after normalization. "
+            f"Bad preview={bad.to_dict(orient='records')}"
+        )
 
     d["y_true"] = d["y_true"].astype(int)
     d["y_pred"] = d["y_pred"].astype(int)
-    d["true_name"] = d["true_name"].map(clean_class)
-    d["pred_name"] = d["pred_name"].map(clean_class)
+
+    # Preserve existing class-name columns if valid, otherwise derive from ids.
+    if "true_name" in d.columns:
+        d["true_name"] = d["true_name"].map(clean_class)
+        # If existing names are empty/non-standard, derive from ids.
+        bad_true_names = ~d["true_name"].isin(names)
+        if bad_true_names.mean() > 0.05:
+            d["true_name"] = d["y_true"].map(label_id_to_name)
+    elif "true_class" in d.columns:
+        d["true_name"] = d["true_class"].map(clean_class)
+        bad_true_names = ~d["true_name"].isin(names)
+        if bad_true_names.mean() > 0.05:
+            d["true_name"] = d["y_true"].map(label_id_to_name)
+    else:
+        d["true_name"] = d["y_true"].map(label_id_to_name)
+
+    if "pred_name" in d.columns:
+        d["pred_name"] = d["pred_name"].map(clean_class)
+        bad_pred_names = ~d["pred_name"].isin(names)
+        if bad_pred_names.mean() > 0.05:
+            d["pred_name"] = d["y_pred"].map(label_id_to_name)
+    elif "pred_class" in d.columns:
+        d["pred_name"] = d["pred_class"].map(clean_class)
+        bad_pred_names = ~d["pred_name"].isin(names)
+        if bad_pred_names.mean() > 0.05:
+            d["pred_name"] = d["y_pred"].map(label_id_to_name)
+    else:
+        d["pred_name"] = d["y_pred"].map(label_id_to_name)
+
     d["correct"] = d["y_true"] == d["y_pred"]
 
     # Probability columns.
@@ -193,9 +264,10 @@ def normalize_predictions(df: pd.DataFrame, names: List[str]) -> pd.DataFrame:
             d["confidence"] = d[list(prob_cols.values())].max(axis=1)
         else:
             d["confidence"] = np.nan
+    else:
+        d["confidence"] = pd.to_numeric(d["confidence"], errors="coerce")
 
     return d
-
 
 def load_confusion_matrix(path: Optional[Path], names: List[str]) -> Optional[pd.DataFrame]:
     if path is None or not path.exists():
