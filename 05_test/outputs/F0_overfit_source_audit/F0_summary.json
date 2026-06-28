@@ -1,0 +1,391 @@
+{
+  "stage": "F0_overfit_source_audit",
+  "tree_usage": "none",
+  "training": "none",
+  "checkpoint_load": {
+    "path": "/home/pak/Documents/src_baocao/03_outputs/06_model/best_model.pt",
+    "strict": true,
+    "missing_keys": [],
+    "unexpected_keys": []
+  },
+  "model_kwargs": {
+    "run_id": "D3",
+    "num_bins": 512,
+    "n_features": 55,
+    "num_classes": 4,
+    "value_dim": 32,
+    "feature_dim": 32,
+    "hidden_dim": 128,
+    "num_layers": 3,
+    "num_heads": 4,
+    "dropout": 0.1,
+    "classifier_hidden_dim": 128,
+    "classifier_dropout": 0.1,
+    "norm_first": true,
+    "gate_init": 0.0,
+    "activation": "gelu"
+  },
+  "paths": {
+    "dataset_npz": "/home/pak/Documents/src_baocao/03_outputs/05_dataset/dataset.npz",
+    "metadata_json": "/home/pak/Documents/src_baocao/03_outputs/05_dataset/metadata.json",
+    "train_raw": "/home/pak/Documents/src_baocao/01_split/train_raw.csv",
+    "val_raw": "/home/pak/Documents/src_baocao/01_split/val_raw.csv",
+    "baseline_checkpoint": "/home/pak/Documents/src_baocao/03_outputs/06_model/best_model.pt"
+  },
+  "n_features": 55,
+  "raw_features_found": 55,
+  "num_bins": 512,
+  "metrics": {
+    "train": {
+      "overall": {
+        "accuracy": 0.9406519327587678,
+        "macro_f1": 0.9102526425914476,
+        "weighted_f1": 0.9403680152881045
+      }
+    },
+    "val": {
+      "overall": {
+        "accuracy": 0.8738907849829352,
+        "macro_f1": 0.8100942811251435,
+        "weighted_f1": 0.8734741993346657
+      }
+    },
+    "gap": {
+      "accuracy": 0.06676114777583264,
+      "macro_f1": 0.10015836146630408,
+      "weighted_f1": 0.0668938159534388
+    }
+  },
+  "top2": {
+    "train": {
+      "top1_acc": 0.9406519327587678,
+      "top2_acc": 0.9913815171942999,
+      "wrong_true_in_top2_rate": 0.8547807332854062,
+      "wrong_total": 2782,
+      "wrong_true_in_top2": 2378
+    },
+    "val": {
+      "top1_acc": 0.8738907849829352,
+      "top2_acc": 0.9680034129692833,
+      "wrong_true_in_top2_rate": 0.7462787550744249,
+      "wrong_total": 1478,
+      "wrong_true_in_top2": 1103
+    }
+  },
+  "token_risk": {
+    "mean_val_unseen_sample_rate": 9.30809804529941e-05,
+    "mean_val_rare_le5_sample_rate": 0.0017778467266521872,
+    "mean_token_shortcut_gap": 0.002881626356218177,
+    "max_token_shortcut_gap": 0.012666341843865503,
+    "top_token_shortcut_features": [
+      {
+        "feature": "handles.nhandles",
+        "train_token_majority_acc": 0.6995264101032511,
+        "val_token_majority_acc_seen": 0.6868600682593856,
+        "train_minus_val_token_acc": 0.012666341843865503
+      },
+      {
+        "feature": "handles.nevent",
+        "train_token_majority_acc": 0.6961558153426061,
+        "val_token_majority_acc_seen": 0.6844709897610921,
+        "train_minus_val_token_acc": 0.011684825581513958
+      },
+      {
+        "feature": "handles.nthread",
+        "train_token_majority_acc": 0.673564297294991,
+        "val_token_majority_acc_seen": 0.6619453924914676,
+        "train_minus_val_token_acc": 0.011618904803523455
+      },
+      {
+        "feature": "dlllist.ndlls",
+        "train_token_majority_acc": 0.7085928833518218,
+        "val_token_majority_acc_seen": 0.6982935153583618,
+        "train_minus_val_token_acc": 0.010299367993459985
+      },
+      {
+        "feature": "pslist.avg_threads",
+        "train_token_majority_acc": 0.6560500042665757,
+        "val_token_majority_acc_seen": 0.646160409556314,
+        "train_minus_val_token_acc": 0.009889594710261629
+      },
+      {
+        "feature": "ldrmodules.not_in_init_avg",
+        "train_token_majority_acc": 0.6243066814574623,
+        "val_token_majority_acc_seen": 0.614419795221843,
+        "train_minus_val_token_acc": 0.009886886235619285
+      },
+      {
+        "feature": "psxview.not_in_csrss_handles_false_avg",
+        "train_token_majority_acc": 0.5913473845891287,
+        "val_token_majority_acc_seen": 0.5819965870307168,
+        "train_minus_val_token_acc": 0.00935079755841195
+      },
+      {
+        "feature": "pslist.avg_handlers",
+        "train_token_majority_acc": 0.6974144551582899,
+        "val_token_majority_acc_seen": 0.6887372013651877,
+        "train_minus_val_token_acc": 0.008677253793102246
+      },
+      {
+        "feature": "handles.nsection",
+        "train_token_majority_acc": 0.712560798702961,
+        "val_token_majority_acc_seen": 0.7045221843003413,
+        "train_minus_val_token_acc": 0.00803861440261966
+      },
+      {
+        "feature": "handles.nfile",
+        "train_token_majority_acc": 0.7016383650482123,
+        "val_token_majority_acc_seen": 0.6945392491467577,
+        "train_minus_val_token_acc": 0.007099115901454622
+      }
+    ],
+    "top_token_sparse_error_features": [
+      {
+        "feature": "malfind.commitCharge",
+        "val_rare_le5_sample_rate": 0.014419795221843003,
+        "wrong_minus_correct_rare_le5": 0.008274585874344254,
+        "val_unseen_sample_rate": 0.00017064846416382253
+      },
+      {
+        "feature": "malfind.ninjections",
+        "val_rare_le5_sample_rate": 0.0037542662116040954,
+        "wrong_minus_correct_rare_le5": 0.005768917236701327,
+        "val_unseen_sample_rate": 0.0
+      },
+      {
+        "feature": "svcscan.nactive",
+        "val_rare_le5_sample_rate": 0.0011092150170648465,
+        "wrong_minus_correct_rare_le5": 0.004150306823847994,
+        "val_unseen_sample_rate": 0.0
+      },
+      {
+        "feature": "svcscan.nservices",
+        "val_rare_le5_sample_rate": 0.0011945392491467576,
+        "wrong_minus_correct_rare_le5": 0.004052669643609759,
+        "val_unseen_sample_rate": 0.0
+      },
+      {
+        "feature": "ldrmodules.not_in_mem",
+        "val_rare_le5_sample_rate": 0.002559726962457338,
+        "wrong_minus_correct_rare_le5": 0.004038929093210873,
+        "val_unseen_sample_rate": 0.0004266211604095563
+      },
+      {
+        "feature": "ldrmodules.not_in_init",
+        "val_rare_le5_sample_rate": 0.0021331058020477816,
+        "wrong_minus_correct_rare_le5": 0.0037528878276956125,
+        "val_unseen_sample_rate": 0.00034129692832764505
+      },
+      {
+        "feature": "malfind.protection",
+        "val_rare_le5_sample_rate": 0.0063993174061433445,
+        "wrong_minus_correct_rare_le5": 0.0035163918160224863,
+        "val_unseen_sample_rate": 0.0007679180887372013
+      },
+      {
+        "feature": "svcscan.shared_process_services",
+        "val_rare_le5_sample_rate": 0.0010238907849829352,
+        "wrong_minus_correct_rare_le5": 0.003473716837379793,
+        "val_unseen_sample_rate": 0.0
+      },
+      {
+        "feature": "ldrmodules.not_in_load",
+        "val_rare_le5_sample_rate": 0.0024744027303754265,
+        "wrong_minus_correct_rare_le5": 0.0033623391067426735,
+        "val_unseen_sample_rate": 0.0004266211604095563
+      },
+      {
+        "feature": "svcscan.kernel_drivers",
+        "val_rare_le5_sample_rate": 0.0006825938566552901,
+        "wrong_minus_correct_rare_le5": 0.0023158112249198623,
+        "val_unseen_sample_rate": 0.0
+      }
+    ]
+  },
+  "raw_drift_risk": {
+    "max_psi": 0.0015434733038010688,
+    "max_ks": 0.01236757233593122,
+    "mean_psi": 0.0005122983087329262,
+    "top_raw_drift_features": [
+      {
+        "feature": "pslist.nppid",
+        "psi": 0.0015434733038010688,
+        "ks": 0.006853045155514548,
+        "mean_shift_std_units": 0.016851326105263215
+      },
+      {
+        "feature": "dlllist.ndlls",
+        "psi": 0.001086930743219968,
+        "ks": 0.01001015823607826,
+        "mean_shift_std_units": 0.009297942745752274
+      },
+      {
+        "feature": "handles.ndesktop",
+        "psi": 0.0010746700868053424,
+        "ks": 0.00907979719640839,
+        "mean_shift_std_units": 0.02005402927928884
+      },
+      {
+        "feature": "handles.nsection",
+        "psi": 0.0010047472080142589,
+        "ks": 0.009780098070080775,
+        "mean_shift_std_units": 0.000659906007494775
+      },
+      {
+        "feature": "ldrmodules.not_in_init",
+        "psi": 0.0009543898839977233,
+        "ks": 0.009381813961575197,
+        "mean_shift_std_units": 0.014024183568575587
+      },
+      {
+        "feature": "handles.nevent",
+        "psi": 0.0009241432130494534,
+        "ks": 0.008530231673601424,
+        "mean_shift_std_units": 0.005450566338201592
+      },
+      {
+        "feature": "handles.ntimer",
+        "psi": 0.0008779697890634064,
+        "ks": 0.009765347076463732,
+        "mean_shift_std_units": 0.014243986753628706
+      },
+      {
+        "feature": "handles.nthread",
+        "psi": 0.0008727216007761134,
+        "ks": 0.010827345808431643,
+        "mean_shift_std_units": 0.009074966588803824
+      },
+      {
+        "feature": "pslist.nproc",
+        "psi": 0.0008402882375593152,
+        "ks": 0.008929658874899632,
+        "mean_shift_std_units": 0.013536127486670243
+      },
+      {
+        "feature": "handles.ndirectory",
+        "psi": 0.0008244849349343285,
+        "ks": 0.009654503479807452,
+        "mean_shift_std_units": 0.02361783005750599
+      }
+    ],
+    "top_class_conditional_drift": [
+      {
+        "feature": "psxview.not_in_ethread_pool_false_avg",
+        "label": "Trojan",
+        "psi": 0.011900623968619704,
+        "ks": 0.028857574854686985,
+        "mean_shift_std_units": 0.031246979829771867
+      },
+      {
+        "feature": "psxview.not_in_session_false_avg",
+        "label": "Ransomware",
+        "psi": 0.009609755190342528,
+        "ks": 0.02340608886671136,
+        "mean_shift_std_units": 0.03551102328407994
+      },
+      {
+        "feature": "handles.nsection",
+        "label": "Spyware",
+        "psi": 0.008632809227366343,
+        "ks": 0.023827345309381215,
+        "mean_shift_std_units": 0.048683621237174186
+      },
+      {
+        "feature": "ldrmodules.not_in_init_avg",
+        "label": "Trojan",
+        "psi": 0.008321471032233123,
+        "ks": 0.021322759811449044,
+        "mean_shift_std_units": 0.0009668753173837525
+      },
+      {
+        "feature": "psxview.not_in_ethread_pool_false_avg",
+        "label": "Ransomware",
+        "psi": 0.008309585074555273,
+        "ks": 0.02292352000483866,
+        "mean_shift_std_units": 0.02093593051263064
+      },
+      {
+        "feature": "psxview.not_in_csrss_handles_false_avg",
+        "label": "Trojan",
+        "psi": 0.0082914070118718,
+        "ks": 0.023589982935402487,
+        "mean_shift_std_units": 0.02644466696682964
+      },
+      {
+        "feature": "ldrmodules.not_in_load_avg",
+        "label": "Ransomware",
+        "psi": 0.007998564243569452,
+        "ks": 0.024029830629018423,
+        "mean_shift_std_units": 0.032122617658210215
+      },
+      {
+        "feature": "psxview.not_in_deskthrd_false_avg",
+        "label": "Trojan",
+        "psi": 0.007913362797788757,
+        "ks": 0.025780877232826516,
+        "mean_shift_std_units": 0.031225422287834384
+      },
+      {
+        "feature": "ldrmodules.not_in_init_avg",
+        "label": "Spyware",
+        "psi": 0.007674747954216285,
+        "ks": 0.017215568862275446,
+        "mean_shift_std_units": 0.0020574278112917817
+      },
+      {
+        "feature": "psxview.not_in_pslist_false_avg",
+        "label": "Ransomware",
+        "psi": 0.007672472899066599,
+        "ks": 0.02200263731313168,
+        "mean_shift_std_units": 0.031094836852781752
+      },
+      {
+        "feature": "pslist.avg_threads",
+        "label": "Trojan",
+        "psi": 0.007282803491319708,
+        "ks": 0.020366253351974506,
+        "mean_shift_std_units": 0.012615587452512431
+      },
+      {
+        "feature": "psxview.not_in_csrss_handles_false_avg",
+        "label": "Spyware",
+        "psi": 0.007254842831020162,
+        "ks": 0.016467065868263492,
+        "mean_shift_std_units": 0.012591845280439683
+      },
+      {
+        "feature": "ldrmodules.not_in_mem_avg",
+        "label": "Ransomware",
+        "psi": 0.007243813822925074,
+        "ks": 0.024284932536820958,
+        "mean_shift_std_units": 0.032355647375475534
+      },
+      {
+        "feature": "psxview.not_in_csrss_handles_false_avg",
+        "label": "Ransomware",
+        "psi": 0.006984842740363619,
+        "ks": 0.0221579535743206,
+        "mean_shift_std_units": 0.027692798581286492
+      },
+      {
+        "feature": "psxview.not_in_pspcid_list_false_avg",
+        "label": "Ransomware",
+        "psi": 0.006951679368511078,
+        "ks": 0.02072660635989787,
+        "mean_shift_std_units": 0.009446199747125537
+      }
+    ]
+  },
+  "error_risk": {
+    "corr_wrong_rare_le5_frac": 0.01442611516459573,
+    "corr_wrong_unseen_frac": 0.026286314446045827,
+    "corr_wrong_margin_prob": -0.464164091890321
+  },
+  "diagnosis_text": "- Strong generalization gap detected: train-val macro-F1 gap = 0.1002.",
+  "next_decision_rule": {
+    "if_token_risk_high": "Run K/rare-bin/token-dropout tests, not pair heads.",
+    "if_raw_drift_high": "Run stability-aware feature filtering/dropout tests.",
+    "if_both_low_but_gap_high": "Run capacity/regularization ablations.",
+    "before_solution_tests": "Compare against E1-E5 and previous K/adaptive-K tests to avoid duplication."
+  }
+}

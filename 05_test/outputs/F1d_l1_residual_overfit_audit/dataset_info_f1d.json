@@ -1,0 +1,44 @@
+{
+  "dataset_npz": "/home/pak/Documents/src_baocao/03_outputs/05_dataset/dataset.npz",
+  "keys": [
+    "X_train_bin",
+    "X_train_offset",
+    "y_train",
+    "X_val_bin",
+    "X_val_offset",
+    "y_val",
+    "feature_names",
+    "label_names",
+    "K",
+    "num_bins"
+  ],
+  "n_train": 46876,
+  "n_val": 11720,
+  "n_features": 55,
+  "num_bins": 512,
+  "raw_available": true,
+  "raw_cols_preview": [
+    "pslist.nproc",
+    "pslist.nppid",
+    "pslist.avg_threads",
+    "pslist.nprocs64bit",
+    "pslist.avg_handlers",
+    "dlllist.ndlls",
+    "dlllist.avg_dlls_per_proc",
+    "handles.nhandles",
+    "handles.avg_handles_per_proc",
+    "handles.nport"
+  ],
+  "feature_names_preview": [
+    "pslist.nproc",
+    "pslist.nppid",
+    "pslist.avg_threads",
+    "pslist.nprocs64bit",
+    "pslist.avg_handlers",
+    "dlllist.ndlls",
+    "dlllist.avg_dlls_per_proc",
+    "handles.nhandles",
+    "handles.avg_handles_per_proc",
+    "handles.nport"
+  ]
+}

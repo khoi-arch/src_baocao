@@ -1,0 +1,135 @@
+file,preview
+/home/pak/Documents/src_baocao/02_src/06_model.py,"8: D3 = offset interpolation + raw_scaled FiLM/multiply fusion, followed by a
+9: feature-level TransformerEncoder and CLS classifier.
+31: D3OffsetFiLMEmbedding = _embedding_mod.D3OffsetFiLMEmbedding
+38: class D3C2D3Transformer(nn.Module):
+51:         classifier_hidden_dim: int | None = None,
+52:         classifier_dropout: float | None = None,
+70:         if classifier_hidden_dim is None:
+71:             classifier_hidden_dim = int(cfg(""CLASSIFIER_HIDDEN_DIM"", hidden_dim))
+72:         if classifier_dropout is None:
+73:             classifier_dropout = float(cfg(""CLASSIFIER_DROPOUT"", dropout))
+95:             ""continuous_source"": ""raw_scaled"",
+96:             ""fusion"": ""raw_film"",
+97:             ""description"": ""offset interpolation + raw FiLM/multiply fusion"",
+100:         self.embedding = D3OffsetFiLMEmbedding(
+114:         encoder_layer = nn.TransformerEncoderLayer(
+123:         self.encoder = nn.TransformerEncoder(
+128:         self.classifier = nn.Sequential(
+130:             nn.Linear(self.hidden_dim, int(classifier_hidden_dim)),
+132:             nn.Dropout(float(classifier_dropout)),
+133:             nn.Linear(int(classifier_hidden_dim), int(num_classes)),
+136:     def forward(self, tokens: torch.Tensor, values: torch.Tensor, *, return_info: bool = False):
+137:         cell_emb = self.embedding(tokens, values)
+144:         logits = self.classifier(cls_out)"
+/home/pak/Documents/src_baocao/02_src/02_embedding.py,"10:   - continuous signal: raw_scaled value in [0,1]
+11:   - fusion: feature-wise FiLM/multiply
+15:   values: FloatTensor [B, F, 3]
+16:     values[..., 0] = offset within bin
+17:     values[..., 1] = raw_scaled continuous value
+18:     values[..., 2] = continuous mask, usually 1 for D3
+32: class D3OffsetFiLMEmbedding(nn.Module):
+59:         self.bin_embedding = nn.Embedding(self.num_bins + 1, self.value_dim)
+60:         self.feature_embedding = nn.Embedding(self.n_features, self.feature_dim)
+91:     def forward(self, tokens: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+94:         if values.ndim != 3 or values.shape[-1] < 3:
+95:             raise ValueError(f""values must be [B,F,3], got {tuple(values.shape)}"")
+96:         if tuple(values.shape[:2]) != tuple(tokens.shape):
+97:             raise ValueError(f""values shape must match tokens, got {tuple(values.shape)} vs {tuple(tokens.shape)}"")
+99:         vals = values.to(dtype=torch.float32, device=tokens.device)"
+/home/pak/Documents/src_baocao/02_src/07_train.py,"16:   03_outputs/train_runs_fusion_ablation_D0_D7/Keff512/<run-name>/
+19:   10_train_fusion_ablation_D0_D7.py + 05_train.py semantics,
+89:     p.add_argument(""--classifier-hidden-dim"", type=int, default=int(cfg(""CLASSIFIER_HIDDEN_DIM"", 128)))
+90:     p.add_argument(""--classifier-dropout"", type=float, default=float(cfg(""CLASSIFIER_DROPOUT"", 0.1)))
+108:         ""fusion"": ""none"",
+113:         ""continuous_source"": ""raw_scaled"",
+114:         ""fusion"": ""raw_scalar_concat"",
+119:         ""continuous_source"": ""raw_scaled"",
+120:         ""fusion"": ""raw_project_gate_concat"",
+121:         ""description"": ""offset interpolation + raw projected gated concat-fusion"",
+125:         ""continuous_source"": ""raw_scaled"",
+126:         ""fusion"": ""raw_film"",
+127:         ""description"": ""offset interpolation + raw FiLM/multiply fusion"",
+132:         ""fusion"": ""z_project_gate_concat"",
+133:         ""description"": ""offset interpolation + z projected gated concat-fusion"",
+137:         ""continuous_source"": ""raw_scaled"",
+138:         ""fusion"": ""raw_selective_project_gate_concat"",
+139:         ""description"": ""offset interpolation + raw selective wide/tail projected gated concat-fusion"",
+144:         ""fusion"": ""none"",
+150:         ""fusion"": ""none"",
+151:         ""description"": ""bin embedding + projected offset concat-fusion"",
+280: def load_raw_scaled(meta: Dict[str, object], args: argparse.Namespace) -> Tuple[np.ndarray, np.ndarray, Dict[str, object]]:
+319:         ""source"": ""raw_scaled"",
+347:     if source == ""raw_scaled"":
+348:         return load_raw_scaled(meta, args)
+367:       - empirical train width of continuous values inside feature/bin is high.
+435: class FusionAblationDataset(Dataset):
+439:       values: [F, 3]
+440:         values[...,0] = offset
+441:         values[...,1] = continuous
+442:         values[...,2] = continuous_mask
+466: class BaseValueEmbedding(nn.Module):
+476:         self.feature_embedding = nn.Embedding(self.n_features, self.feature_dim)
+490: class D0OffsetInterpolationEmbedding(BaseValueEmbedding):
+493:         self.bin_embedding = nn.Embedding(self.num_bins + 1, self.value_dim)
+503:     def forward(self, bin_ids: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+504:         offset = values[..., 0:1].to(dtype=torch.float32, device=bin_ids.device).clamp(0.0, 1.0)
+509: class D1InterpRawScalarConcatEmbedding(BaseValueEmbedding):
+515:         self.bin_embedding = nn.Embedding(self.num_bins + 1, self.local_dim)
+525:     def forward(self, bin_ids: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+526:         vals = values.to(dtype=torch.float32, device=bin_ids.device)
+534: class D2D4D5InterpProjectGateConcatEmbedding(BaseValueEmbedding):
+536:     Proper concat-fusion:
+542:     This keeps local bin geometry and global continuous as separate branches before fusion.
+547:         self.bin_embedding = nn.Embedding(self.num_bins + 1, self.value_dim)
+574:     def forward(self, bin_ids: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+575:         vals = values.to(dtype=torch.float32, device=bin_ids.device)
+601: class D3InterpRawFiLMEmbedding(BaseValueEmbedding):
+603:     FiLM/multiply fusion:
+611:         self.bin_embedding = nn.Embedding(self.num_bins + 1, self.value_dim)
+630:     def forward(self, bin_ids: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+631:         vals = values.to(dtype=torch.float32, device=bin_ids.device)
+659: class D6ProjectedOffsetAddEmbedding(BaseValueEmbedding):
+662:         self.bin_embedding = nn.Embedding(self.num_bins, self.value_dim)
+671:     def forward(self, bin_ids: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+672:         offset = values[..., 0:1].to(dtype=torch.float32, device=bin_ids.device).clamp(0.0, 1.0)
+678: class D7ProjectedOffsetConcatEmbedding(BaseValueEmbedding):
+681:         self.bin_embedding = nn.Embedding(self.num_bins, self.value_dim)
+693:     def forward(self, bin_ids: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+694:         offset = values[..., 0:1].to(dtype=torch.float32, device=bin_ids.device).clamp(0.0, 1.0)
+702: class FusionAblationTransformer(nn.Module):
+716:         classifier_hidden_dim: int,
+717:         classifier_dropout: float,
+737:             self.embedding = D0OffsetInterpolationEmbedding(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+739:             self.embedding = D1InterpRawScalarConcatEmbedding(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+741:             self.embedding = D2D4D5InterpProjectGateConcatEmbedding(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim, gate_init=gate_init)
+743:             self.embedding = D3InterpRawFiLMEmbedding(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim, gate_init=gate_init)
+745:             self.embedding = D6ProjectedOffsetAddEmbedding(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+747:             self.embedding = D7ProjectedOffsetConcatEmbedding(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+759:         encoder_layer = nn.TransformerEncoderLayer(
+768:         self.encoder = nn.TransformerEncoder(
+774:         self.classifier = nn.Sequential(
+776:             nn.Linear(self.hidden_dim, int(classifier_hidden_dim)),
+778:             nn.Dropout(float(classifier_dropout)),
+779:             nn.Linear(int(classifier_hidden_dim), int(num_classes)),
+782:     def forward(self, tokens: torch.Tensor, z_values: torch.Tensor | None = None, *, return_info: bool = False):
+783:         if z_values is None:
+784:             raise ValueError(""z_values must contain [offset, continuous, mask]."")
+786:         cell_emb = self.embedding(tokens, z_values)
+795:         logits = self.classifier(cls_out)
+890:     model: ""FusionAblationTransformer"",
+992:     model: FusionAblationTransformer,
+1018:         ""fusion"": spec[""fusion""],
+1045:             ""classifier_hidden_dim"": int(args.classifier_hidden_dim),
+1046:             ""classifier_dropout"": float(args.classifier_dropout),
+1150:         out_root = resolve_path(args.out_root) if args.out_root else resolve_path(cfg(""OUTPUT_ROOT"", Path(""03_outputs"")) / ""train_runs_fusion_ablation_D0_D7"")
+1191:             ""fusion"": spec[""fusion""],
+1203:             ""classifier_hidden_dim"": int(args.classifier_hidden_dim),
+1204:             ""classifier_dropout"": float(args.classifier_dropout),
+1254:     model = FusionAblationTransformer(
+1265:         classifier_hidden_dim=int(args.classifier_hidden_dim),
+1266:         classifier_dropout=float(args.classifier_dropout),
+1305:     print(""===== fusion ablation training start ====="")
+1454:     _train_mod.write_confusion_outputs(out_dir, ""train"", best_train_eval, label_names)
+1455:     _train_mod.write_confusion_outputs(out_dir, ""val"", best_val_eval, label_names)
+1480:     print(""===== fusion ablation training done ====="")"
