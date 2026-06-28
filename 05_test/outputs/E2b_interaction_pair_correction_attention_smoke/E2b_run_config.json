@@ -1,0 +1,97 @@
+{
+  "stage": "E2b_interaction_pair_correction_attention",
+  "target_macro_f1": 0.9,
+  "args": {
+    "dataset_npz": "03_outputs/05_dataset/dataset.npz",
+    "metadata_json": "03_outputs/05_dataset/metadata.json",
+    "train_raw": "01_split/train_raw.csv",
+    "val_raw": "01_split/val_raw.csv",
+    "official_train": "02_src/07_train.py",
+    "baseline_pred": "03_outputs/06_model/val_predictions_best.csv",
+    "out_dir": "05_test/outputs/E2b_interaction_pair_correction_attention_smoke",
+    "device": "cpu",
+    "interaction_specs": "",
+    "ratio_eps": 0.001,
+    "interaction_clip_low": 0.01,
+    "interaction_clip_high": 0.99,
+    "d_model": 64,
+    "value_hidden_dim": 128,
+    "num_layers": 1,
+    "num_heads": 4,
+    "dropout": 0.1,
+    "classifier_hidden_dim": 128,
+    "classifier_dropout": 0.1,
+    "correction_scale_init": 0.25,
+    "fixed_correction_scale": false,
+    "epochs": 2,
+    "batch_size": 256,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "scheduler": "warmup_cosine",
+    "warmup_epochs": 8,
+    "min_lr_ratio": 0.05,
+    "patience": 15,
+    "min_delta": 1e-05,
+    "grad_clip_norm": 1.0,
+    "main_aux_weight": 0.25,
+    "pair_aux_weight": 0.4,
+    "correction_l2": 0.0,
+    "use_class_weights": true,
+    "seed": 42,
+    "num_workers": 0,
+    "log_every": 1,
+    "attention_topk": 20,
+    "make_zip": true
+  },
+  "device": "cpu",
+  "label_names": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "num_bins": 512,
+  "continuous_info": {
+    "source": "raw_scaled",
+    "train_path": "/home/pak/Documents/src_baocao/01_split/train_raw.csv",
+    "val_path": "/home/pak/Documents/src_baocao/01_split/val_raw.csv",
+    "scale": "train_only_minmax_linear_clip_val",
+    "n_constant_features": 3,
+    "constant_features": [
+      "pslist.nprocs64bit",
+      "handles.nport",
+      "svcscan.interactive_process_services"
+    ],
+    "train_min": 0.0,
+    "train_max": 1.0,
+    "val_min": 0.0,
+    "val_max": 1.0
+  },
+  "pair_class_ids": {
+    "RS": [
+      1,
+      2
+    ],
+    "RT": [
+      1,
+      3
+    ],
+    "ST": [
+      2,
+      3
+    ]
+  },
+  "n_base_features": 55,
+  "n_interactions": 8,
+  "interaction_names": [
+    "INTER::RS_absdiff_psxview_not_in_csrss_handles_false_avg__pslist_nproc",
+    "INTER::RS_ratio_psxview_not_in_csrss_handles_false_avg__pslist_nproc",
+    "INTER::RT_ratio_handles_nfile__ldrmodules_not_in_mem",
+    "INTER::RT_absdiff_handles_nfile__ldrmodules_not_in_mem",
+    "INTER::ST_absdiff_handles_nfile__malfind_ninjections",
+    "INTER::ST_ratio_handles_nfile__malfind_ninjections",
+    "INTER::ALL_product_callbacks_ngeneric__pslist_avg_threads",
+    "INTER::ALL_absdiff_svcscan_interactive_process_services__handles_nevent"
+  ],
+  "model_role": "attention final model; tree not used in inference"
+}
