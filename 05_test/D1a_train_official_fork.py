@@ -1,0 +1,1755 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+07_train.py
+
+Final-pipeline D3 trainer for the C2 dataset.
+
+Default clean workflow:
+  input : 03_outputs/05_dataset/dataset.npz
+          03_outputs/05_dataset/metadata.json
+  raw   : 01_split/train_raw.csv, 01_split/val_raw.csv
+  output: 03_outputs/06_model/
+
+Compatibility workflow:
+  pass --out-root and --run-name to write old-style folders such as
+  03_outputs/train_runs_fusion_ablation_D0_D7/Keff512/<run-name>/
+
+The model/training behavior is copied from the old official D3 path:
+  10_train_fusion_ablation_D0_D7.py + 05_train.py semantics,
+  but locked to D3 only.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Tuple
+
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, Dataset
+
+import config as CFG
+import train_utils as _train_mod
+
+
+def cfg(name: str, default):
+    return getattr(CFG, name, default)
+
+
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Train official D3 only on final C2 dataset. Exact old D3 behavior, no reimplementation.")
+
+    p.add_argument("--run-id", choices=["D3"], default="D3")
+    p.add_argument("--K", type=int, default=int(cfg("TOKEN_K", 1000)))
+    p.add_argument("--num-bins", type=int, default=int(cfg("VALUE_NUM_BINS", 128)))
+    p.add_argument("--dataset-npz", default="")
+    p.add_argument("--metadata-json", default="")
+    # Default clean pipeline output. Leave --run-name empty so `python 02_src/07_train.py`
+    # writes directly to 03_outputs/06_model instead of old train_runs folders.
+    p.add_argument("--out-root", default="")
+    p.add_argument("--run-name", default="")
+
+    p.add_argument("--train-raw", default="")
+    p.add_argument("--val-raw", default="")
+
+    # D5 selective continuous parameters; distribution-only, no labels.
+    p.add_argument("--tail-frac", type=float, default=0.10)
+    p.add_argument("--wide-quantile", type=float, default=0.90)
+
+    p.add_argument("--seed", type=int, default=int(cfg("TRAIN_SEED", 42)))
+    p.add_argument("--device", default=str(cfg("TRAIN_DEVICE", "auto")))
+
+    p.add_argument("--epochs", type=int, default=int(cfg("TRAIN_EPOCHS", 80)))
+    p.add_argument("--batch-size", type=int, default=int(cfg("TRAIN_BATCH_SIZE", 256)))
+    p.add_argument("--lr", type=float, default=float(cfg("TRAIN_LR", 1e-3)))
+    p.add_argument("--weight-decay", type=float, default=float(cfg("TRAIN_WEIGHT_DECAY", 1e-4)))
+    p.add_argument("--scheduler", choices=["none", "warmup_cosine"], default=str(cfg("TRAIN_SCHEDULER", "warmup_cosine")))
+    p.add_argument("--warmup-epochs", type=int, default=int(cfg("TRAIN_WARMUP_EPOCHS", 8)))
+    p.add_argument("--min-lr-ratio", type=float, default=float(cfg("TRAIN_MIN_LR_RATIO", 0.05)))
+    p.add_argument("--patience", type=int, default=int(cfg("TRAIN_PATIENCE", 12)))
+    p.add_argument("--min-delta", type=float, default=float(cfg("TRAIN_MIN_DELTA", 1e-4)))
+    p.add_argument("--num-workers", type=int, default=int(cfg("TRAIN_NUM_WORKERS", 0)))
+    p.add_argument("--grad-clip-norm", type=float, default=float(cfg("TRAIN_GRAD_CLIP_NORM", 1.0)))
+    p.add_argument("--use-class-weights", action=argparse.BooleanOptionalAction, default=bool(cfg("USE_CLASS_WEIGHTS", True)))
+
+    # D1a isolated test knobs. Keep lambda_pair=0.0 to reproduce official training exactly.
+    # When lambda_pair>0, auxiliary pairwise BCE loss is added during train only.
+    p.add_argument("--lambda-pair", type=float, default=0.0)
+    p.add_argument("--aux-hidden-dim", type=int, default=0, help="0 = Linear(hidden_dim->1); >0 = small MLP head")
+    p.add_argument("--aux-dropout", type=float, default=0.1)
+
+    p.add_argument("--value-dim", type=int, default=int(cfg("VALUE_EMBED_DIM", 32)))
+    p.add_argument("--feature-dim", type=int, default=int(cfg("FEATURE_EMBED_DIM", 32)))
+    p.add_argument("--hidden-dim", type=int, default=int(cfg("MODEL_HIDDEN_DIM", 128)))
+    p.add_argument("--num-layers", type=int, default=int(cfg("MODEL_NUM_LAYERS", 3)))
+    p.add_argument("--num-heads", type=int, default=int(cfg("MODEL_NUM_HEADS", 4)))
+    p.add_argument("--dropout", type=float, default=float(cfg("MODEL_DROPOUT", 0.1)))
+    p.add_argument("--classifier-hidden-dim", type=int, default=int(cfg("CLASSIFIER_HIDDEN_DIM", 128)))
+    p.add_argument("--classifier-dropout", type=float, default=float(cfg("CLASSIFIER_DROPOUT", 0.1)))
+    p.add_argument("--norm-first", action=argparse.BooleanOptionalAction, default=bool(cfg("TRANSFORMER_NORM_FIRST", True)))
+
+    # sigmoid(0)=0.5. Conservative default; model can move it up/down per feature.
+    p.add_argument("--gate-init", type=float, default=0.0)
+    p.add_argument(
+        "--diagnostic-only",
+        action="store_true",
+        help="Build data/model diagnostics and exit before training. Useful for checking boundary collapse and scale diagnostics.",
+    )
+
+    return p.parse_args()
+
+
+RUN_SPECS: Dict[str, Dict[str, str]] = {
+    "D0": {
+        "local": "offset_interpolation",
+        "continuous_source": "none",
+        "fusion": "none",
+        "description": "offset interpolation only",
+    },
+    "D1": {
+        "local": "offset_interpolation",
+        "continuous_source": "raw_scaled",
+        "fusion": "raw_scalar_concat",
+        "description": "offset interpolation + raw scalar concat",
+    },
+    "D2": {
+        "local": "offset_interpolation",
+        "continuous_source": "raw_scaled",
+        "fusion": "raw_project_gate_concat",
+        "description": "offset interpolation + raw projected gated concat-fusion",
+    },
+    "D3": {
+        "local": "offset_interpolation",
+        "continuous_source": "raw_scaled",
+        "fusion": "raw_film",
+        "description": "offset interpolation + raw FiLM/multiply fusion",
+    },
+    "D4": {
+        "local": "offset_interpolation",
+        "continuous_source": "z_preprocessed",
+        "fusion": "z_project_gate_concat",
+        "description": "offset interpolation + z projected gated concat-fusion",
+    },
+    "D5": {
+        "local": "offset_interpolation",
+        "continuous_source": "raw_scaled",
+        "fusion": "raw_selective_project_gate_concat",
+        "description": "offset interpolation + raw selective wide/tail projected gated concat-fusion",
+    },
+    "D6": {
+        "local": "projected_offset_add",
+        "continuous_source": "none",
+        "fusion": "none",
+        "description": "bin embedding + projected offset add",
+    },
+    "D7": {
+        "local": "projected_offset_concat",
+        "continuous_source": "none",
+        "fusion": "none",
+        "description": "bin embedding + projected offset concat-fusion",
+    },
+}
+
+
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def resolve_path(path_like: str | Path) -> Path:
+    """Resolve relative paths from repo root, not from the caller's cwd."""
+    p = Path(path_like)
+    if p.is_absolute():
+        return p
+    return repo_root() / p
+
+
+def default_model_dir() -> Path:
+    if hasattr(CFG, "MODEL_DIR"):
+        return resolve_path(Path(CFG.MODEL_DIR))
+    return resolve_path(cfg("OUTPUT_ROOT", Path("03_outputs")) / "06_model")
+
+
+def default_dataset_path(K: int, B: int) -> Path:
+    # Clean pipeline default: train on the final C2 dataset produced by 05_build_dataset.py.
+    # Fallback preserves old official layout.
+    if hasattr(CFG, "DATASET_NPZ"):
+        return Path(CFG.DATASET_NPZ)
+    return cfg("OUTPUT_ROOT", Path("03_outputs")) / "build_mixed_quantile_offset" / f"K{K}_B{B}_C2_selective_rank_discrete_compact" / "mixed_quantile_offset_dataset.npz"
+
+
+def default_metadata_path(K: int, B: int) -> Path:
+    if hasattr(CFG, "DATASET_METADATA"):
+        return Path(CFG.DATASET_METADATA)
+    return cfg("OUTPUT_ROOT", Path("03_outputs")) / "build_mixed_quantile_offset" / f"K{K}_B{B}_C2_selective_rank_discrete_compact" / "mixed_quantile_offset_metadata.json"
+
+
+def resolve_repo_path(path_from_meta: str | Path, fallback_relative: str) -> Path:
+    p = Path(path_from_meta)
+    if p.exists():
+        return p
+
+    root = repo_root()
+    fallback = root / fallback_relative
+    if fallback.exists():
+        return fallback
+
+    parts = list(p.parts)
+    for anchor in ["03_outputs", "01_split", "00_raw_dataset"]:
+        if anchor in parts:
+            idx = parts.index(anchor)
+            rel = Path(*parts[idx:])
+            candidate = root / rel
+            if candidate.exists():
+                return candidate
+
+    raise FileNotFoundError(f"Could not resolve path. metadata_path={p}, fallback={fallback}")
+
+
+def load_dataset(dataset_path: Path, metadata_path: Path) -> Tuple[Dict[str, np.ndarray], Dict[str, object]]:
+    if not dataset_path.exists():
+        raise FileNotFoundError(str(dataset_path))
+    if not metadata_path.exists():
+        raise FileNotFoundError(str(metadata_path))
+
+    data = dict(np.load(dataset_path, allow_pickle=True))
+    meta = json.loads(metadata_path.read_text(encoding="utf-8"))
+
+    required = ["X_train_bin", "X_train_offset", "y_train", "X_val_bin", "X_val_offset", "y_val"]
+    missing = [k for k in required if k not in data]
+    if missing:
+        raise ValueError(f"dataset missing arrays: {missing}")
+
+    return data, meta
+
+
+def load_z_preprocessed(meta: Dict[str, object]) -> Tuple[np.ndarray, np.ndarray, Dict[str, object]]:
+    feature_names = [str(x) for x in meta["feature_names"]]
+
+    train_path = resolve_repo_path(
+        meta["input"]["train_preprocessed"],
+        "03_outputs/preprocessing/train_preprocessed_K1000.csv",
+    )
+    val_path = resolve_repo_path(
+        meta["input"]["val_preprocessed"],
+        "03_outputs/preprocessing/val_preprocessed_K1000.csv",
+    )
+
+    train = pd.read_csv(train_path)
+    val = pd.read_csv(val_path)
+
+    missing_train = [f for f in feature_names if f not in train.columns]
+    missing_val = [f for f in feature_names if f not in val.columns]
+    if missing_train:
+        raise ValueError(f"train_preprocessed missing features: {missing_train[:10]}")
+    if missing_val:
+        raise ValueError(f"val_preprocessed missing features: {missing_val[:10]}")
+
+    X_train = train.loc[:, feature_names].to_numpy(dtype=np.float32)
+    X_val = val.loc[:, feature_names].to_numpy(dtype=np.float32)
+
+    X_train = np.clip(X_train, 0.0, 1.0).astype(np.float32)
+    X_val = np.clip(X_val, 0.0, 1.0).astype(np.float32)
+
+    info = {
+        "source": "z_preprocessed",
+        "train_path": str(train_path),
+        "val_path": str(val_path),
+        "scale": "already_preprocessed_to_0_1",
+        "train_min": float(X_train.min()),
+        "train_max": float(X_train.max()),
+        "val_min": float(X_val.min()),
+        "val_max": float(X_val.max()),
+    }
+    return X_train, X_val, info
+
+
+def resolve_raw_paths(args: argparse.Namespace) -> Tuple[Path, Path]:
+    train_path = Path(args.train_raw) if args.train_raw else repo_root() / "01_split" / "train_raw.csv"
+    val_path = Path(args.val_raw) if args.val_raw else repo_root() / "01_split" / "val_raw.csv"
+
+    if not train_path.exists():
+        train_path = resolve_repo_path(train_path, "01_split/train_raw.csv")
+    if not val_path.exists():
+        val_path = resolve_repo_path(val_path, "01_split/val_raw.csv")
+
+    return train_path, val_path
+
+
+def load_raw_scaled(meta: Dict[str, object], args: argparse.Namespace) -> Tuple[np.ndarray, np.ndarray, Dict[str, object]]:
+    feature_names = [str(x) for x in meta["feature_names"]]
+    train_path, val_path = resolve_raw_paths(args)
+
+    train = pd.read_csv(train_path)
+    val = pd.read_csv(val_path)
+
+    missing_train = [f for f in feature_names if f not in train.columns]
+    missing_val = [f for f in feature_names if f not in val.columns]
+    if missing_train:
+        raise ValueError(f"train_raw missing features: {missing_train[:10]}")
+    if missing_val:
+        raise ValueError(f"val_raw missing features: {missing_val[:10]}")
+
+    X_train_raw = train.loc[:, feature_names].to_numpy(dtype=np.float64)
+    X_val_raw = val.loc[:, feature_names].to_numpy(dtype=np.float64)
+
+    if np.isnan(X_train_raw).any() or np.isinf(X_train_raw).any():
+        raise ValueError("train_raw contains NaN/Inf in selected features")
+    if np.isnan(X_val_raw).any() or np.isinf(X_val_raw).any():
+        raise ValueError("val_raw contains NaN/Inf in selected features")
+
+    mn = X_train_raw.min(axis=0)
+    mx = X_train_raw.max(axis=0)
+    denom = mx - mn
+    constant = np.isclose(denom, 0.0)
+    denom_safe = denom.copy()
+    denom_safe[constant] = 1.0
+
+    X_train = (X_train_raw - mn) / denom_safe
+    X_val = (X_val_raw - mn) / denom_safe
+
+    X_train[:, constant] = 0.5
+    X_val[:, constant] = 0.5
+
+    X_train = np.clip(X_train, 0.0, 1.0).astype(np.float32)
+    X_val = np.clip(X_val, 0.0, 1.0).astype(np.float32)
+
+    info = {
+        "source": "raw_scaled",
+        "train_path": str(train_path),
+        "val_path": str(val_path),
+        "scale": "train_only_minmax_linear_clip_val",
+        "n_constant_features": int(constant.sum()),
+        "constant_features": [feature_names[i] for i, c in enumerate(constant) if bool(c)],
+        "train_min": float(X_train.min()),
+        "train_max": float(X_train.max()),
+        "val_min": float(X_val.min()),
+        "val_max": float(X_val.max()),
+    }
+    return X_train, X_val, info
+
+
+def load_continuous_for_run(
+    spec: Dict[str, str],
+    meta: Dict[str, object],
+    args: argparse.Namespace,
+    train_shape: Tuple[int, int],
+    val_shape: Tuple[int, int],
+) -> Tuple[np.ndarray, np.ndarray, Dict[str, object]]:
+    source = spec["continuous_source"]
+    if source == "none":
+        return (
+            np.zeros(train_shape, dtype=np.float32),
+            np.zeros(val_shape, dtype=np.float32),
+            {"source": "none", "scale": "none"},
+        )
+    if source == "raw_scaled":
+        return load_raw_scaled(meta, args)
+    if source == "z_preprocessed":
+        return load_z_preprocessed(meta)
+    raise ValueError(f"unknown continuous source: {source}")
+
+
+def build_selective_mask(
+    X_train_bin: np.ndarray,
+    X_val_bin: np.ndarray,
+    X_train_cont: np.ndarray,
+    *,
+    num_bins: int,
+    tail_frac: float,
+    wide_quantile: float,
+) -> Tuple[np.ndarray, np.ndarray, Dict[str, object]]:
+    """
+    Distribution-only selective mask.
+    Active if:
+      - bin index is in lower/upper tail by bin index, OR
+      - empirical train width of continuous values inside feature/bin is high.
+
+    No labels are used.
+    """
+    N, F = X_train_bin.shape
+    tail_bins = max(1, int(round(num_bins * float(tail_frac))))
+
+    active_table = np.zeros((F, num_bins), dtype=bool)
+    width_table = np.zeros((F, num_bins), dtype=np.float32)
+
+    tail_bin_mask = np.zeros(num_bins, dtype=bool)
+    tail_bin_mask[:tail_bins] = True
+    tail_bin_mask[num_bins - tail_bins:] = True
+
+    wide_counts = []
+    thresholds = []
+
+    for j in range(F):
+        bcol = np.clip(X_train_bin[:, j].astype(np.int64), 0, num_bins - 1)
+        xcol = X_train_cont[:, j].astype(np.float32)
+
+        widths = np.zeros(num_bins, dtype=np.float32)
+        for b in np.unique(bcol):
+            vals = xcol[bcol == b]
+            if vals.size >= 2:
+                widths[b] = float(vals.max() - vals.min())
+
+        width_table[j] = widths
+        nonzero = widths[widths > 0.0]
+        if nonzero.size:
+            thr = float(np.quantile(nonzero, float(wide_quantile)))
+            wide_mask = widths >= thr
+        else:
+            thr = None
+            wide_mask = np.zeros(num_bins, dtype=bool)
+
+        active_table[j] = tail_bin_mask | wide_mask
+        wide_counts.append(int(wide_mask.sum()))
+        thresholds.append(thr)
+
+    def sample_mask(X_bin: np.ndarray) -> np.ndarray:
+        Xb = np.clip(X_bin.astype(np.int64), 0, num_bins - 1)
+        out = np.zeros(Xb.shape, dtype=np.float32)
+        for j in range(F):
+            out[:, j] = active_table[j, Xb[:, j]].astype(np.float32)
+        return out
+
+    train_mask = sample_mask(X_train_bin)
+    val_mask = sample_mask(X_val_bin)
+
+    info = {
+        "type": "wide_or_tail_distribution_only",
+        "tail_frac": float(tail_frac),
+        "tail_bins_each_side": int(tail_bins),
+        "wide_quantile": float(wide_quantile),
+        "train_active_ratio": float(train_mask.mean()),
+        "val_active_ratio": float(val_mask.mean()),
+        "active_bins_mean_per_feature": float(active_table.sum(axis=1).mean()),
+        "active_bins_min_per_feature": int(active_table.sum(axis=1).min()),
+        "active_bins_max_per_feature": int(active_table.sum(axis=1).max()),
+        "wide_bins_mean_per_feature": float(np.mean(wide_counts)),
+        "wide_bins_min_per_feature": int(np.min(wide_counts)),
+        "wide_bins_max_per_feature": int(np.max(wide_counts)),
+        "thresholds_available": int(sum(t is not None for t in thresholds)),
+    }
+    return train_mask, val_mask, info
+
+
+class FusionAblationDataset(Dataset):
+    """
+    Returns:
+      X_bin: [F]
+      values: [F, 3]
+        values[...,0] = offset
+        values[...,1] = continuous
+        values[...,2] = continuous_mask
+      y
+    """
+    def __init__(self, X_bin: np.ndarray, X_offset: np.ndarray, X_cont: np.ndarray, X_mask: np.ndarray, y: np.ndarray):
+        if X_bin.ndim != 2:
+            raise ValueError(f"X_bin must be [N,F], got {X_bin.shape}")
+        if X_offset.shape != X_bin.shape or X_cont.shape != X_bin.shape or X_mask.shape != X_bin.shape:
+            raise ValueError(f"shape mismatch: bin={X_bin.shape}, offset={X_offset.shape}, cont={X_cont.shape}, mask={X_mask.shape}")
+        if y.ndim != 1 or y.shape[0] != X_bin.shape[0]:
+            raise ValueError(f"y mismatch: {y.shape} vs {X_bin.shape}")
+
+        vals = np.stack([X_offset.astype(np.float32), X_cont.astype(np.float32), X_mask.astype(np.float32)], axis=-1)
+
+        self.X = torch.as_tensor(X_bin, dtype=torch.long)
+        self.V = torch.as_tensor(vals, dtype=torch.float32)
+        self.y = torch.as_tensor(y, dtype=torch.long)
+
+    def __len__(self) -> int:
+        return int(self.X.shape[0])
+
+    def __getitem__(self, idx: int):
+        return self.X[idx], self.V[idx], self.y[idx]
+
+
+class BaseValueEmbedding(nn.Module):
+    def __init__(self, *, num_bins: int, n_features: int, value_dim: int, feature_dim: int, init_std: float = 0.02):
+        super().__init__()
+        self.num_bins = int(num_bins)
+        self.n_features = int(n_features)
+        self.value_dim = int(value_dim)
+        self.feature_dim = int(feature_dim)
+        self.cell_dim = int(value_dim + feature_dim)
+        self.init_std = float(init_std)
+
+        self.feature_embedding = nn.Embedding(self.n_features, self.feature_dim)
+        nn.init.normal_(self.feature_embedding.weight, mean=0.0, std=self.init_std)
+        self.register_buffer("default_feature_ids", torch.arange(self.n_features, dtype=torch.long), persistent=False)
+
+    def add_feature_embedding(self, value_emb: torch.Tensor) -> torch.Tensor:
+        B, F, _ = value_emb.shape
+        fid = self.default_feature_ids.unsqueeze(0).expand(B, F)
+        feature_emb = self.feature_embedding(fid)
+        return torch.cat([value_emb, feature_emb], dim=-1)
+
+    def gate_summary(self) -> Dict[str, float]:
+        return {}
+
+
+class D0OffsetInterpolationEmbedding(BaseValueEmbedding):
+    def __init__(self, *, num_bins: int, n_features: int, value_dim: int, feature_dim: int):
+        super().__init__(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+        self.bin_embedding = nn.Embedding(self.num_bins + 1, self.value_dim)
+        nn.init.normal_(self.bin_embedding.weight, mean=0.0, std=self.init_std)
+
+    def local_interp(self, bin_ids: torch.Tensor, offset: torch.Tensor) -> torch.Tensor:
+        b0 = bin_ids.long().clamp(0, self.num_bins - 1)
+        b1 = b0 + 1
+        e0 = self.bin_embedding(b0)
+        e1 = self.bin_embedding(b1)
+        return (1.0 - offset) * e0 + offset * e1
+
+    def forward(self, bin_ids: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+        offset = values[..., 0:1].to(dtype=torch.float32, device=bin_ids.device).clamp(0.0, 1.0)
+        value_emb = self.local_interp(bin_ids, offset)
+        return self.add_feature_embedding(value_emb)
+
+
+class D1InterpRawScalarConcatEmbedding(BaseValueEmbedding):
+    def __init__(self, *, num_bins: int, n_features: int, value_dim: int, feature_dim: int):
+        super().__init__(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+        if self.value_dim < 2:
+            raise ValueError("value_dim must be >= 2")
+        self.local_dim = self.value_dim - 1
+        self.bin_embedding = nn.Embedding(self.num_bins + 1, self.local_dim)
+        nn.init.normal_(self.bin_embedding.weight, mean=0.0, std=self.init_std)
+
+    def local_interp(self, bin_ids: torch.Tensor, offset: torch.Tensor) -> torch.Tensor:
+        b0 = bin_ids.long().clamp(0, self.num_bins - 1)
+        b1 = b0 + 1
+        e0 = self.bin_embedding(b0)
+        e1 = self.bin_embedding(b1)
+        return (1.0 - offset) * e0 + offset * e1
+
+    def forward(self, bin_ids: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+        vals = values.to(dtype=torch.float32, device=bin_ids.device)
+        offset = vals[..., 0:1].clamp(0.0, 1.0)
+        cont = vals[..., 1:2].clamp(0.0, 1.0)
+        local = self.local_interp(bin_ids, offset)
+        value_emb = torch.cat([local, cont], dim=-1)
+        return self.add_feature_embedding(value_emb)
+
+
+class D2D4D5InterpProjectGateConcatEmbedding(BaseValueEmbedding):
+    """
+    Proper concat-fusion:
+      local_emb  = offset interpolation in value_dim
+      cont_emb   = Project(continuous) in value_dim
+      cont_emb   = sample_mask * sigmoid(gate_feature) * cont_emb
+      value_emb  = Linear(concat([local_emb, cont_emb])) -> value_dim
+
+    This keeps local bin geometry and global continuous as separate branches before fusion.
+    """
+    def __init__(self, *, num_bins: int, n_features: int, value_dim: int, feature_dim: int, gate_init: float):
+        super().__init__(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+
+        self.bin_embedding = nn.Embedding(self.num_bins + 1, self.value_dim)
+        self.cont_proj = nn.Sequential(
+            nn.Linear(1, self.value_dim),
+            nn.GELU(),
+            nn.Linear(self.value_dim, self.value_dim),
+        )
+        self.fuse = nn.Sequential(
+            nn.LayerNorm(self.value_dim * 2),
+            nn.Linear(self.value_dim * 2, self.value_dim),
+        )
+        self.cont_gate_logit = nn.Parameter(torch.full((self.n_features, 1), float(gate_init)))
+
+        nn.init.normal_(self.bin_embedding.weight, mean=0.0, std=self.init_std)
+        for m in self.cont_proj.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                nn.init.zeros_(m.bias)
+        nn.init.xavier_uniform_(self.fuse[1].weight)
+        nn.init.zeros_(self.fuse[1].bias)
+
+    def local_interp(self, bin_ids: torch.Tensor, offset: torch.Tensor) -> torch.Tensor:
+        b0 = bin_ids.long().clamp(0, self.num_bins - 1)
+        b1 = b0 + 1
+        e0 = self.bin_embedding(b0)
+        e1 = self.bin_embedding(b1)
+        return (1.0 - offset) * e0 + offset * e1
+
+    def forward(self, bin_ids: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+        vals = values.to(dtype=torch.float32, device=bin_ids.device)
+        offset = vals[..., 0:1].clamp(0.0, 1.0)
+        cont = vals[..., 1:2].clamp(0.0, 1.0)
+        mask = vals[..., 2:3].clamp(0.0, 1.0)
+
+        B, F = bin_ids.shape
+        local = self.local_interp(bin_ids, offset)
+        cont_emb = self.cont_proj(cont)
+
+        gate = torch.sigmoid(self.cont_gate_logit).to(device=bin_ids.device).unsqueeze(0).expand(B, F, 1)
+        cont_emb = mask * gate * cont_emb
+
+        value_emb = self.fuse(torch.cat([local, cont_emb], dim=-1))
+        return self.add_feature_embedding(value_emb)
+
+    def gate_summary(self) -> Dict[str, float]:
+        with torch.no_grad():
+            g = torch.sigmoid(self.cont_gate_logit.detach().cpu()).numpy()
+        return {
+            "cont_gate_min": float(g.min()),
+            "cont_gate_max": float(g.max()),
+            "cont_gate_mean": float(g.mean()),
+            "cont_gate_std": float(g.std()),
+        }
+
+
+class D3InterpRawFiLMEmbedding(BaseValueEmbedding):
+    """
+    FiLM/multiply fusion:
+      local_emb = offset interpolation
+      gamma,beta = Project(continuous)
+      value_emb = local_emb * (1 + mask * gate * tanh(gamma)) + mask * gate * beta
+    """
+    def __init__(self, *, num_bins: int, n_features: int, value_dim: int, feature_dim: int, gate_init: float):
+        super().__init__(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+
+        self.bin_embedding = nn.Embedding(self.num_bins + 1, self.value_dim)
+        self.gamma_proj = nn.Sequential(nn.Linear(1, self.value_dim), nn.GELU(), nn.Linear(self.value_dim, self.value_dim))
+        self.beta_proj = nn.Sequential(nn.Linear(1, self.value_dim), nn.GELU(), nn.Linear(self.value_dim, self.value_dim))
+        self.cont_gate_logit = nn.Parameter(torch.full((self.n_features, 1), float(gate_init)))
+
+        nn.init.normal_(self.bin_embedding.weight, mean=0.0, std=self.init_std)
+        for net in [self.gamma_proj, self.beta_proj]:
+            for m in net.modules():
+                if isinstance(m, nn.Linear):
+                    nn.init.xavier_uniform_(m.weight)
+                    nn.init.zeros_(m.bias)
+
+    def local_interp(self, bin_ids: torch.Tensor, offset: torch.Tensor) -> torch.Tensor:
+        b0 = bin_ids.long().clamp(0, self.num_bins - 1)
+        b1 = b0 + 1
+        e0 = self.bin_embedding(b0)
+        e1 = self.bin_embedding(b1)
+        return (1.0 - offset) * e0 + offset * e1
+
+    def forward(self, bin_ids: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+        vals = values.to(dtype=torch.float32, device=bin_ids.device)
+        offset = vals[..., 0:1].clamp(0.0, 1.0)
+        cont = vals[..., 1:2].clamp(0.0, 1.0)
+        mask = vals[..., 2:3].clamp(0.0, 1.0)
+
+        B, F = bin_ids.shape
+        local = self.local_interp(bin_ids, offset)
+
+        gamma = torch.tanh(self.gamma_proj(cont))
+        beta = self.beta_proj(cont)
+
+        gate = torch.sigmoid(self.cont_gate_logit).to(device=bin_ids.device).unsqueeze(0).expand(B, F, 1)
+        g = mask * gate
+
+        value_emb = local * (1.0 + g * gamma) + g * beta
+        return self.add_feature_embedding(value_emb)
+
+    def gate_summary(self) -> Dict[str, float]:
+        with torch.no_grad():
+            g = torch.sigmoid(self.cont_gate_logit.detach().cpu()).numpy()
+        return {
+            "cont_gate_min": float(g.min()),
+            "cont_gate_max": float(g.max()),
+            "cont_gate_mean": float(g.mean()),
+            "cont_gate_std": float(g.std()),
+        }
+
+
+class D6ProjectedOffsetAddEmbedding(BaseValueEmbedding):
+    def __init__(self, *, num_bins: int, n_features: int, value_dim: int, feature_dim: int):
+        super().__init__(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+        self.bin_embedding = nn.Embedding(self.num_bins, self.value_dim)
+        self.offset_proj = nn.Sequential(nn.Linear(1, self.value_dim), nn.GELU(), nn.Linear(self.value_dim, self.value_dim))
+
+        nn.init.normal_(self.bin_embedding.weight, mean=0.0, std=self.init_std)
+        for m in self.offset_proj.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                nn.init.zeros_(m.bias)
+
+    def forward(self, bin_ids: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+        offset = values[..., 0:1].to(dtype=torch.float32, device=bin_ids.device).clamp(0.0, 1.0)
+        b = bin_ids.long().clamp(0, self.num_bins - 1)
+        value_emb = self.bin_embedding(b) + self.offset_proj(offset)
+        return self.add_feature_embedding(value_emb)
+
+
+class D7ProjectedOffsetConcatEmbedding(BaseValueEmbedding):
+    def __init__(self, *, num_bins: int, n_features: int, value_dim: int, feature_dim: int):
+        super().__init__(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+        self.bin_embedding = nn.Embedding(self.num_bins, self.value_dim)
+        self.offset_proj = nn.Sequential(nn.Linear(1, self.value_dim), nn.GELU(), nn.Linear(self.value_dim, self.value_dim))
+        self.fuse = nn.Sequential(nn.LayerNorm(self.value_dim * 2), nn.Linear(self.value_dim * 2, self.value_dim))
+
+        nn.init.normal_(self.bin_embedding.weight, mean=0.0, std=self.init_std)
+        for m in self.offset_proj.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                nn.init.zeros_(m.bias)
+        nn.init.xavier_uniform_(self.fuse[1].weight)
+        nn.init.zeros_(self.fuse[1].bias)
+
+    def forward(self, bin_ids: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+        offset = values[..., 0:1].to(dtype=torch.float32, device=bin_ids.device).clamp(0.0, 1.0)
+        b = bin_ids.long().clamp(0, self.num_bins - 1)
+        bin_emb = self.bin_embedding(b)
+        offset_emb = self.offset_proj(offset)
+        value_emb = self.fuse(torch.cat([bin_emb, offset_emb], dim=-1))
+        return self.add_feature_embedding(value_emb)
+
+
+class FusionAblationTransformer(nn.Module):
+    def __init__(
+        self,
+        *,
+        run_id: str,
+        num_bins: int,
+        n_features: int,
+        num_classes: int,
+        value_dim: int,
+        feature_dim: int,
+        hidden_dim: int,
+        num_layers: int,
+        num_heads: int,
+        dropout: float,
+        classifier_hidden_dim: int,
+        classifier_dropout: float,
+        norm_first: bool,
+        gate_init: float,
+        activation: str = "gelu",
+    ) -> None:
+        super().__init__()
+        if hidden_dim % num_heads != 0:
+            raise ValueError(f"hidden_dim must be divisible by num_heads: {hidden_dim}/{num_heads}")
+
+        self.run_id = str(run_id)
+        self.spec = RUN_SPECS[self.run_id]
+        self.num_bins = int(num_bins)
+        self.n_features = int(n_features)
+        self.num_classes = int(num_classes)
+        self.value_dim = int(value_dim)
+        self.feature_dim = int(feature_dim)
+        self.cell_dim = int(value_dim + feature_dim)
+        self.hidden_dim = int(hidden_dim)
+
+        if run_id == "D0":
+            self.embedding = D0OffsetInterpolationEmbedding(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+        elif run_id == "D1":
+            self.embedding = D1InterpRawScalarConcatEmbedding(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+        elif run_id in {"D2", "D4", "D5"}:
+            self.embedding = D2D4D5InterpProjectGateConcatEmbedding(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim, gate_init=gate_init)
+        elif run_id == "D3":
+            self.embedding = D3InterpRawFiLMEmbedding(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim, gate_init=gate_init)
+        elif run_id == "D6":
+            self.embedding = D6ProjectedOffsetAddEmbedding(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+        elif run_id == "D7":
+            self.embedding = D7ProjectedOffsetConcatEmbedding(num_bins=num_bins, n_features=n_features, value_dim=value_dim, feature_dim=feature_dim)
+        else:
+            raise ValueError(f"unknown run_id: {run_id}")
+
+        self.input_proj = nn.Sequential(
+            nn.LayerNorm(self.cell_dim),
+            nn.Linear(self.cell_dim, self.hidden_dim),
+        )
+
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, self.hidden_dim))
+        nn.init.normal_(self.cls_token, mean=0.0, std=0.02)
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=self.hidden_dim,
+            nhead=num_heads,
+            dim_feedforward=self.hidden_dim * 4,
+            dropout=float(dropout),
+            activation=activation,
+            batch_first=True,
+            norm_first=bool(norm_first),
+        )
+        self.encoder = nn.TransformerEncoder(
+            encoder_layer=encoder_layer,
+            num_layers=num_layers,
+            norm=nn.LayerNorm(self.hidden_dim),
+        )
+
+        self.classifier = nn.Sequential(
+            nn.LayerNorm(self.hidden_dim),
+            nn.Linear(self.hidden_dim, int(classifier_hidden_dim)),
+            nn.GELU(),
+            nn.Dropout(float(classifier_dropout)),
+            nn.Linear(int(classifier_hidden_dim), int(num_classes)),
+        )
+
+    def forward(self, tokens: torch.Tensor, z_values: torch.Tensor | None = None, *, return_info: bool = False, return_cls: bool = False):
+        if z_values is None:
+            raise ValueError("z_values must contain [offset, continuous, mask].")
+
+        cell_emb = self.embedding(tokens, z_values)
+        x = self.input_proj(cell_emb)
+
+        B = x.shape[0]
+        cls = self.cls_token.expand(B, 1, self.hidden_dim)
+        x = torch.cat([cls, x], dim=1)
+
+        encoded = self.encoder(x)
+        cls_out = encoded[:, 0, :]
+        logits = self.classifier(cls_out)
+
+        info = {
+            "cell_emb_shape": tuple(cell_emb.shape),
+            "encoded_shape": tuple(encoded.shape),
+            "cls_out_shape": tuple(cls_out.shape),
+            "cell_dim": self.cell_dim,
+            "num_bins": self.num_bins,
+            "run_id": self.run_id,
+            "spec": self.spec,
+        }
+        if return_cls and return_info:
+            return logits, cls_out, info
+        if return_cls:
+            return logits, cls_out
+        if return_info:
+            return logits, info
+        return logits
+
+    def embedding_extra_summary(self) -> Dict[str, float]:
+        if hasattr(self.embedding, "gate_summary"):
+            return self.embedding.gate_summary()
+        return {}
+
+
+def strip_eval(report: Dict[str, object]) -> Dict[str, object]:
+    skip = {"y_true", "y_pred", "confidence", "probs"}
+    return {k: v for k, v in report.items() if k not in skip}
+
+
+def malware_avg_f1(report: Dict[str, object]) -> float:
+    vals = []
+    for label, m in report["per_class"].items():
+        if str(label).strip().lower() != "benign":
+            vals.append(float(m["f1"]))
+    return float(np.mean(vals)) if vals else 0.0
+
+
+D1A_HARD_PAIRS: List[Tuple[str, str]] = [
+    ("Ransomware", "Spyware"),
+    ("Ransomware", "Trojan"),
+    ("Spyware", "Trojan"),
+]
+
+
+def make_d1a_aux_head(hidden_dim: int, aux_hidden_dim: int, aux_dropout: float) -> nn.Module:
+    if int(aux_hidden_dim) > 0:
+        return nn.Sequential(
+            nn.Linear(int(hidden_dim), int(aux_hidden_dim)),
+            nn.GELU(),
+            nn.Dropout(float(aux_dropout)),
+            nn.Linear(int(aux_hidden_dim), 1),
+        )
+    return nn.Linear(int(hidden_dim), 1)
+
+
+def attach_d1a_aux_heads(
+    model: FusionAblationTransformer,
+    *,
+    label_names: List[str],
+    hidden_dim: int,
+    aux_hidden_dim: int,
+    aux_dropout: float,
+) -> Dict[str, object]:
+    """Attach auxiliary pair heads directly to the official model instance.
+
+    This keeps the official architecture/training loop intact except for the extra
+    pairwise loss when --lambda-pair > 0. Inference/evaluate still uses main logits only.
+    """
+    label_to_id = {str(name): int(i) for i, name in enumerate(label_names)}
+    pair_defs = []
+    heads = nn.ModuleDict()
+    for a, b in D1A_HARD_PAIRS:
+        if a not in label_to_id or b not in label_to_id:
+            raise KeyError(f"D1a hard pair labels missing: {a}, {b}; label_names={label_names}")
+        key = f"{a}__vs__{b}"
+        heads[key] = make_d1a_aux_head(hidden_dim, aux_hidden_dim, aux_dropout)
+        pair_defs.append({
+            "key": key,
+            "a": a,
+            "b": b,
+            "a_id": int(label_to_id[a]),
+            "b_id": int(label_to_id[b]),
+        })
+    model.d1a_aux_heads = heads
+    model.d1a_pair_defs = pair_defs
+    return {"hard_pairs": pair_defs, "aux_hidden_dim": int(aux_hidden_dim), "aux_dropout": float(aux_dropout)}
+
+
+def d1a_aux_pairwise_loss(model: FusionAblationTransformer, cls_out: torch.Tensor, y: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, object]]:
+    if not hasattr(model, "d1a_aux_heads") or not hasattr(model, "d1a_pair_defs"):
+        return torch.zeros((), dtype=torch.float32, device=y.device), {"available": False}
+
+    losses = []
+    details: Dict[str, object] = {"available": True, "pairs": {}}
+    for pair in model.d1a_pair_defs:
+        key = str(pair["key"])
+        a_id = int(pair["a_id"])
+        b_id = int(pair["b_id"])
+        mask = (y == a_id) | (y == b_id)
+        n = int(mask.sum().item())
+        if n == 0:
+            details["pairs"][key] = {"n": 0, "loss": None}
+            continue
+        target = (y[mask] == b_id).float()
+        logit = model.d1a_aux_heads[key](cls_out[mask]).squeeze(-1)
+        loss = nn.functional.binary_cross_entropy_with_logits(logit, target)
+        losses.append(loss)
+        details["pairs"][key] = {"n": n, "loss": float(loss.detach().cpu().item())}
+
+    if not losses:
+        return torch.zeros((), dtype=torch.float32, device=y.device), details
+    return torch.stack(losses).mean(), details
+
+
+def train_one_epoch_d1a(
+    *,
+    model: FusionAblationTransformer,
+    loader: DataLoader,
+    criterion: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    device: torch.device,
+    grad_clip_norm: float,
+    lambda_pair: float,
+) -> Dict[str, float]:
+    """Official train_one_epoch semantics + one extra auxiliary loss.
+
+    This intentionally mirrors 02_src/train_utils.py::train_one_epoch:
+      - same X/Z/y loader contract
+      - same optimizer.zero_grad/backward/clip/step order
+      - only changes model(..., return_cls=True) and loss = main + lambda_pair * pair
+    """
+    model.train()
+    total_loss = 0.0
+    total_main = 0.0
+    total_pair = 0.0
+    total_n = 0
+
+    for X, Z, y in loader:
+        X = X.to(device, non_blocking=True)
+        Z = Z.to(device, non_blocking=True)
+        y = y.to(device, non_blocking=True)
+
+        optimizer.zero_grad(set_to_none=True)
+        logits, cls_out = model(X, z_values=Z, return_cls=True)
+        main_loss = criterion(logits, y)
+        pair_loss, _ = d1a_aux_pairwise_loss(model, cls_out, y)
+        loss = main_loss + float(lambda_pair) * pair_loss
+        loss.backward()
+
+        if grad_clip_norm and grad_clip_norm > 0:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), float(grad_clip_norm))
+
+        optimizer.step()
+
+        n = int(X.size(0))
+        total_loss += float(loss.item()) * n
+        total_main += float(main_loss.item()) * n
+        total_pair += float(pair_loss.item()) * n
+        total_n += n
+
+    return {
+        "loss": float(total_loss / max(total_n, 1)),
+        "main_loss": float(total_main / max(total_n, 1)),
+        "pair_loss": float(total_pair / max(total_n, 1)),
+    }
+
+
+def evaluate_d1a_aux_pairs(
+    *,
+    model: FusionAblationTransformer,
+    loader: DataLoader,
+    device: torch.device,
+) -> List[Dict[str, object]]:
+    if not hasattr(model, "d1a_aux_heads") or not hasattr(model, "d1a_pair_defs"):
+        return []
+
+    model.eval()
+    store: Dict[str, Dict[str, list]] = {
+        str(pair["key"]): {"target": [], "score": []}
+        for pair in model.d1a_pair_defs
+    }
+    with torch.no_grad():
+        for X, Z, y in loader:
+            X = X.to(device, non_blocking=True)
+            Z = Z.to(device, non_blocking=True)
+            y = y.to(device, non_blocking=True)
+            _logits, cls_out = model(X, z_values=Z, return_cls=True)
+            for pair in model.d1a_pair_defs:
+                key = str(pair["key"])
+                a_id = int(pair["a_id"])
+                b_id = int(pair["b_id"])
+                mask = (y == a_id) | (y == b_id)
+                if int(mask.sum().item()) == 0:
+                    continue
+                target = (y[mask] == b_id).long()
+                score = model.d1a_aux_heads[key](cls_out[mask]).squeeze(-1)
+                store[key]["target"].extend(target.detach().cpu().numpy().astype(int).tolist())
+                store[key]["score"].extend(score.detach().cpu().numpy().astype(float).tolist())
+
+    rows: List[Dict[str, object]] = []
+    for pair in model.d1a_pair_defs:
+        key = str(pair["key"])
+        target = np.asarray(store[key]["target"], dtype=np.int64)
+        score = np.asarray(store[key]["score"], dtype=np.float64)
+        if target.size == 0:
+            rows.append({"pair_key": key, "n": 0})
+            continue
+        pred = (score >= 0.0).astype(np.int64)
+        metrics = _train_mod.metrics_from_predictions(target, pred, 2, [str(pair["a"]), str(pair["b"])])
+        row = {
+            "pair_key": key,
+            "pair": f"{pair['a']}<->{pair['b']}",
+            "n": int(target.size),
+            "accuracy": float(metrics["accuracy"]),
+            "macro_f1": float(metrics["macro_f1"]),
+        }
+        # AUC without sklearn dependency: rank-based Mann-Whitney equivalent.
+        pos = score[target == 1]
+        neg = score[target == 0]
+        if pos.size and neg.size:
+            combined = np.concatenate([pos, neg])
+            order = np.argsort(combined)
+            ranks = np.empty_like(order, dtype=np.float64)
+            ranks[order] = np.arange(1, combined.size + 1, dtype=np.float64)
+            pos_ranks = ranks[:pos.size]
+            auc = (pos_ranks.sum() - pos.size * (pos.size + 1) / 2.0) / (pos.size * neg.size)
+            row["auc"] = float(auc)
+        else:
+            row["auc"] = None
+        rows.append(row)
+    return rows
+
+
+
+def make_boundary_bin_diagnostics(
+    X_bin: np.ndarray,
+    X_offset: np.ndarray,
+    *,
+    num_bins: int,
+    feature_names: List[str],
+    split_name: str,
+) -> Dict[str, object]:
+    """Measure how much data falls into the last bin affected by old boundary collapse."""
+    Xb = np.asarray(X_bin, dtype=np.int64)
+    Off = np.asarray(X_offset, dtype=np.float32)
+    if Xb.shape != Off.shape:
+        raise ValueError(f"boundary diag shape mismatch: X_bin={Xb.shape}, X_offset={Off.shape}")
+
+    last_bin = int(num_bins) - 1
+    mask = Xb == last_bin
+    n_rows, n_features = Xb.shape
+    total_cells = int(mask.size)
+    last_cells = int(mask.sum())
+
+    per_feature = []
+    for j, name in enumerate(feature_names):
+        mj = mask[:, j]
+        cnt = int(mj.sum())
+        if cnt:
+            offsets = Off[mj, j]
+            offset_min = float(offsets.min())
+            offset_max = float(offsets.max())
+            offset_mean = float(offsets.mean())
+            offset_std = float(offsets.std())
+        else:
+            offset_min = offset_max = offset_mean = offset_std = None
+        per_feature.append({
+            "feature": str(name),
+            "last_bin_count": cnt,
+            "last_bin_ratio": float(cnt / max(n_rows, 1)),
+            "last_bin_offset_min": offset_min,
+            "last_bin_offset_max": offset_max,
+            "last_bin_offset_mean": offset_mean,
+            "last_bin_offset_std": offset_std,
+        })
+
+    top = sorted(per_feature, key=lambda r: r["last_bin_ratio"], reverse=True)[:15]
+    return {
+        "split": split_name,
+        "num_bins": int(num_bins),
+        "last_bin_id": int(last_bin),
+        "n_rows": int(n_rows),
+        "n_features": int(n_features),
+        "total_cells": total_cells,
+        "last_bin_cells": last_cells,
+        "last_bin_cell_ratio": float(last_cells / max(total_cells, 1)),
+        "features_with_last_bin": int(sum(1 for r in per_feature if r["last_bin_count"] > 0)),
+        "max_feature_last_bin_ratio": float(max((r["last_bin_ratio"] for r in per_feature), default=0.0)),
+        "mean_feature_last_bin_ratio": float(np.mean([r["last_bin_ratio"] for r in per_feature])) if per_feature else 0.0,
+        "top_features_by_last_bin_ratio": top,
+    }
+
+
+def make_embedding_runtime_diagnostics(
+    model: "FusionAblationTransformer",
+    *,
+    X_bin: np.ndarray,
+    X_offset: np.ndarray,
+    X_cont: np.ndarray,
+    X_mask: np.ndarray,
+    device: torch.device,
+    max_rows: int = 2048,
+) -> Dict[str, object]:
+    """Lightweight forward-scale checks before training.
+
+    This verifies that endpoint interpolation is not collapsed at the final bin,
+    and records activation scales for local embedding vs continuous branch.
+    """
+    emb = model.embedding
+    n = int(min(max_rows, X_bin.shape[0]))
+    X = torch.as_tensor(X_bin[:n], dtype=torch.long, device=device)
+    V = torch.as_tensor(
+        np.stack([
+            X_offset[:n].astype(np.float32),
+            X_cont[:n].astype(np.float32),
+            X_mask[:n].astype(np.float32),
+        ], axis=-1),
+        dtype=torch.float32,
+        device=device,
+    )
+    out: Dict[str, object] = {
+        "n_rows_checked": n,
+        "has_local_interp": bool(hasattr(emb, "local_interp")),
+        "embedding_class": emb.__class__.__name__,
+    }
+
+    with torch.no_grad():
+        vals = V.to(dtype=torch.float32, device=device)
+        offset = vals[..., 0:1].clamp(0.0, 1.0)
+        cont = vals[..., 1:2].clamp(0.0, 1.0)
+        mask = vals[..., 2:3].clamp(0.0, 1.0)
+        out["offset_mean"] = float(offset.mean().detach().cpu())
+        out["offset_std"] = float(offset.std(unbiased=False).detach().cpu())
+        out["continuous_mean"] = float(cont.mean().detach().cpu())
+        out["continuous_std"] = float(cont.std(unbiased=False).detach().cpu())
+        out["continuous_mask_mean"] = float(mask.mean().detach().cpu())
+
+        if hasattr(emb, "bin_embedding"):
+            out["bin_embedding_num_embeddings"] = int(emb.bin_embedding.num_embeddings)
+            out["bin_embedding_dim"] = int(emb.bin_embedding.embedding_dim)
+            out["bin_embedding_weight_std"] = float(emb.bin_embedding.weight.detach().std(unbiased=False).cpu())
+
+        if hasattr(emb, "local_interp"):
+            local = emb.local_interp(X, offset)
+            out["local_abs_mean"] = float(local.abs().mean().detach().cpu())
+            out["local_std"] = float(local.std(unbiased=False).detach().cpu())
+            out["local_l2_mean_per_cell"] = float(torch.linalg.vector_norm(local, dim=-1).mean().detach().cpu())
+
+            # Direct boundary sensitivity check: old implementation gives zero here.
+            b_last = torch.full((1, 1), int(emb.num_bins) - 1, dtype=torch.long, device=device)
+            off0 = torch.zeros((1, 1, 1), dtype=torch.float32, device=device)
+            off1 = torch.ones((1, 1, 1), dtype=torch.float32, device=device)
+            y0 = emb.local_interp(b_last, off0)
+            y1 = emb.local_interp(b_last, off1)
+            diff = torch.linalg.vector_norm(y1 - y0, dim=-1)
+            out["last_bin_offset_sensitivity_l2"] = float(diff.item())
+            out["last_bin_boundary_collapse_fixed"] = bool(float(diff.item()) > 1e-12)
+
+            # Scale-ratio check most relevant for D1 raw_scalar_concat.
+            local_abs = float(local.abs().mean().detach().cpu())
+            cont_abs = float(cont.abs().mean().detach().cpu())
+            out["continuous_abs_mean_over_local_abs_mean"] = float(cont_abs / max(local_abs, 1e-12))
+
+        if hasattr(emb, "gamma_proj") and hasattr(emb, "beta_proj"):
+            gamma = torch.tanh(emb.gamma_proj(cont))
+            beta = emb.beta_proj(cont)
+            if hasattr(emb, "cont_gate_logit"):
+                Bsz, F = X.shape
+                gate = torch.sigmoid(emb.cont_gate_logit).to(device=device).unsqueeze(0).expand(Bsz, F, 1)
+                g = mask * gate
+            else:
+                g = mask
+            out["film_gamma_abs_mean"] = float(gamma.abs().mean().detach().cpu())
+            out["film_beta_abs_mean"] = float(beta.abs().mean().detach().cpu())
+            out["film_gate_mean"] = float(g.mean().detach().cpu())
+            if hasattr(emb, "local_interp"):
+                delta = (local * (g * gamma)) + (g * beta)
+                out["film_delta_l2_mean_per_cell"] = float(torch.linalg.vector_norm(delta, dim=-1).mean().detach().cpu())
+                out["film_delta_over_local_l2_mean"] = float(
+                    out["film_delta_l2_mean_per_cell"] / max(out.get("local_l2_mean_per_cell", 0.0), 1e-12)
+                )
+
+    return out
+
+def make_diagnosis_summary(
+    *,
+    args: argparse.Namespace,
+    spec: Dict[str, str],
+    best_epoch: int,
+    best_train: Dict[str, object],
+    best_val: Dict[str, object],
+    metadata: Dict[str, object],
+    continuous_info: Dict[str, object],
+    selective_info: Dict[str, object],
+    boundary_data_diagnostics: Dict[str, object],
+    embedding_runtime_diagnostics: Dict[str, object],
+    model: FusionAblationTransformer,
+) -> Dict[str, object]:
+    train_macro = float(best_train["macro_f1"])
+    val_macro = float(best_val["macro_f1"])
+
+    worst_classes = sorted(
+        [
+            {
+                "label": str(label).strip(),
+                "f1": float(m["f1"]),
+                "precision": float(m["precision"]),
+                "recall": float(m["recall"]),
+                "support": int(m["support"]),
+            }
+            for label, m in best_val["per_class"].items()
+        ],
+        key=lambda x: (x["f1"], -x["support"]),
+    )[:10]
+
+    return {
+        "phase": "Final pipeline C2 D3",
+        "run_id": args.run_id,
+        "best_epoch": int(best_epoch),
+        "representation": f"{args.run_id}_{spec['description']}",
+        "local": spec["local"],
+        "continuous_source": spec["continuous_source"],
+        "fusion": spec["fusion"],
+        "train": {
+            "loss": float(best_train["loss"]),
+            "accuracy": float(best_train["accuracy"]),
+            "macro_f1": train_macro,
+            "weighted_f1": float(best_train["weighted_f1"]),
+            "malware_only_avg_f1": malware_avg_f1(best_train),
+        },
+        "val": {
+            "loss": float(best_val["loss"]),
+            "accuracy": float(best_val["accuracy"]),
+            "macro_f1": val_macro,
+            "weighted_f1": float(best_val["weighted_f1"]),
+            "malware_only_avg_f1": malware_avg_f1(best_val),
+        },
+        "generalization_gap_macro_f1": float(train_macro - val_macro),
+        "worst_val_classes_by_f1": worst_classes,
+        "model_config": {
+            "value_dim": int(args.value_dim),
+            "feature_dim": int(args.feature_dim),
+            "cell_dim": int(args.value_dim + args.feature_dim),
+            "num_bins": int(args.num_bins),
+            "effective_token_budget": int(args.num_bins),
+            "hidden_dim": int(args.hidden_dim),
+            "num_layers": int(args.num_layers),
+            "num_heads": int(args.num_heads),
+            "dropout": float(args.dropout),
+            "classifier_hidden_dim": int(args.classifier_hidden_dim),
+            "classifier_dropout": float(args.classifier_dropout),
+            "norm_first": bool(args.norm_first),
+            "use_class_weights": bool(args.use_class_weights),
+            "scheduler": str(args.scheduler),
+            "gate_init": float(args.gate_init),
+        },
+        "continuous_info": continuous_info,
+        "selective_info": selective_info,
+        "boundary_data_diagnostics": boundary_data_diagnostics,
+        "embedding_runtime_diagnostics": embedding_runtime_diagnostics,
+        "embedding_extra_summary": model.embedding_extra_summary(),
+        "strategy_counts": metadata.get("strategy_counts", {}),
+        "baseline_to_compare": {
+            "C0_mixed_bin_scalar_offset_no_continuous": {
+                "train_macro_f1": 0.9321426589148848,
+                "val_macro_f1": 0.8133554660345561,
+                "gap": 0.11878719288032868,
+            },
+            "C2_scalar_offset_raw_scalar_concat": {
+                "train_macro_f1": 0.9265573540092596,
+                "val_macro_f1": 0.809009713024029,
+                "gap": 0.11754764098523063,
+            },
+            "C3_scalar_offset_z_project_gate_add": {
+                "train_macro_f1": 0.890405910135817,
+                "val_macro_f1": 0.8087819336025909,
+                "gap": 0.08162397653322617,
+            },
+            "C4_scalar_offset_raw_project_gate_add": {
+                "train_macro_f1": 0.9110189147125328,
+                "val_macro_f1": 0.807190454742599,
+                "gap": 0.10382845996993384,
+            },
+        },
+    }
+
+
+def main() -> None:
+    args = parse_args()
+    args.run_id = "D3"
+    _train_mod.set_seed(int(args.seed))
+
+    spec = RUN_SPECS[args.run_id]
+    K_artifact = int(args.K)
+    B = int(args.num_bins)
+
+    dataset_path = resolve_path(args.dataset_npz) if args.dataset_npz else resolve_path(default_dataset_path(K_artifact, B))
+    metadata_path = resolve_path(args.metadata_json) if args.metadata_json else resolve_path(default_metadata_path(K_artifact, B))
+
+    data, meta = load_dataset(dataset_path, metadata_path)
+
+    X_train = data["X_train_bin"].astype(np.int64)
+    O_train = data["X_train_offset"].astype(np.float32)
+    y_train = data["y_train"].astype(np.int64)
+
+    X_val = data["X_val_bin"].astype(np.int64)
+    O_val = data["X_val_offset"].astype(np.float32)
+    y_val = data["y_val"].astype(np.int64)
+
+    X_train_cont, X_val_cont, continuous_info = load_continuous_for_run(
+        spec=spec,
+        meta=meta,
+        args=args,
+        train_shape=X_train.shape,
+        val_shape=X_val.shape,
+    )
+
+    if X_train_cont.shape != X_train.shape:
+        raise ValueError(f"train continuous shape mismatch: {X_train_cont.shape} vs {X_train.shape}")
+    if X_val_cont.shape != X_val.shape:
+        raise ValueError(f"val continuous shape mismatch: {X_val_cont.shape} vs {X_val.shape}")
+
+    selective_info: Dict[str, object] = {"type": "none"}
+    if args.run_id == "D5":
+        M_train, M_val, selective_info = build_selective_mask(
+            X_train_bin=X_train,
+            X_val_bin=X_val,
+            X_train_cont=X_train_cont,
+            num_bins=B,
+            tail_frac=float(args.tail_frac),
+            wide_quantile=float(args.wide_quantile),
+        )
+    else:
+        M_train = np.ones_like(X_train, dtype=np.float32)
+        M_val = np.ones_like(X_val, dtype=np.float32)
+
+    feature_names_for_diag = [str(x) for x in meta["feature_names"]]
+    boundary_data_diagnostics = {
+        "train": make_boundary_bin_diagnostics(
+            X_train, O_train, num_bins=B, feature_names=feature_names_for_diag, split_name="train"
+        ),
+        "val": make_boundary_bin_diagnostics(
+            X_val, O_val, num_bins=B, feature_names=feature_names_for_diag, split_name="val"
+        ),
+    }
+
+    label_mapping = meta["label_mapping"]
+    label_names = [label for label, _ in sorted(label_mapping.items(), key=lambda kv: kv[1])]
+    num_classes = int(len(label_names))
+    n_features = int(meta["n_features"])
+
+    # Clean default: python 02_src/07_train.py writes directly to 03_outputs/06_model.
+    # Compatibility mode: if --run-name is provided, keep old-style <out-root>/KeffB/<run-name>.
+    if args.run_name:
+        out_root = resolve_path(args.out_root) if args.out_root else resolve_path(cfg("OUTPUT_ROOT", Path("03_outputs")) / "train_runs_fusion_ablation_D0_D7")
+        out_dir = out_root / f"Keff{B}" / str(args.run_name)
+    else:
+        out_dir = default_model_dir() if not args.out_root else resolve_path(args.out_root)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    device = _train_mod.pick_device(str(args.device))
+
+    config_obj = {
+        "stage": "train_official_d3_final_pipeline",
+        "phase": "C2_D3_final_pipeline_reproduction",
+        "run_id": args.run_id,
+        "run_spec": spec,
+        "K_artifact": K_artifact,
+        "effective_token_budget": B,
+        "num_bins": B,
+        "dataset_npz": str(dataset_path),
+        "metadata_json": str(metadata_path),
+        "out_dir": str(out_dir),
+        "continuous_info": continuous_info,
+        "selective_info": selective_info,
+        "seed": int(args.seed),
+        "device": str(device),
+        "epochs": int(args.epochs),
+        "diagnostic_only": bool(args.diagnostic_only),
+        "batch_size": int(args.batch_size),
+        "lr": float(args.lr),
+        "weight_decay": float(args.weight_decay),
+        "scheduler": str(args.scheduler),
+        "warmup_epochs": int(args.warmup_epochs),
+        "min_lr_ratio": float(args.min_lr_ratio),
+        "patience": int(args.patience),
+        "min_delta": float(args.min_delta),
+        "grad_clip_norm": float(args.grad_clip_norm),
+        "use_class_weights": bool(args.use_class_weights),
+        "d1a": {
+            "enabled": bool(float(args.lambda_pair) > 0.0),
+            "lambda_pair": float(args.lambda_pair),
+            "aux_hidden_dim": int(args.aux_hidden_dim),
+            "aux_dropout": float(args.aux_dropout),
+            "hard_pairs": D1A_HARD_PAIRS,
+            "note": "D1a fork keeps official 07_train loop; only train_one_epoch is replaced when lambda_pair > 0.",
+        },
+        "n_features": n_features,
+        "num_classes": num_classes,
+        "label_names": label_names,
+        "representation": {
+            "local": spec["local"],
+            "continuous_source": spec["continuous_source"],
+            "fusion": spec["fusion"],
+            "description": spec["description"],
+            "strategy_counts": meta.get("strategy_counts", {}),
+        },
+        "model": {
+            "value_dim": int(args.value_dim),
+            "feature_dim": int(args.feature_dim),
+            "cell_dim": int(args.value_dim + args.feature_dim),
+            "hidden_dim": int(args.hidden_dim),
+            "num_layers": int(args.num_layers),
+            "num_heads": int(args.num_heads),
+            "dropout": float(args.dropout),
+            "classifier_hidden_dim": int(args.classifier_hidden_dim),
+            "classifier_dropout": float(args.classifier_dropout),
+            "norm_first": bool(args.norm_first),
+            "gate_init": float(args.gate_init),
+        },
+        "boundary_data_diagnostics": boundary_data_diagnostics,
+        "data_shapes": {
+            "X_train_bin": list(X_train.shape),
+            "X_train_offset": list(O_train.shape),
+            "X_train_continuous": list(X_train_cont.shape),
+            "X_train_mask": list(M_train.shape),
+            "y_train": list(y_train.shape),
+            "X_val_bin": list(X_val.shape),
+            "X_val_offset": list(O_val.shape),
+            "X_val_continuous": list(X_val_cont.shape),
+            "X_val_mask": list(M_val.shape),
+            "y_val": list(y_val.shape),
+        },
+        "torch_version": torch.__version__,
+    }
+    _train_mod.save_json(out_dir / "config.json", config_obj)
+
+    train_ds = FusionAblationDataset(X_train, O_train, X_train_cont, M_train, y_train)
+    val_ds = FusionAblationDataset(X_val, O_val, X_val_cont, M_val, y_val)
+
+    generator = torch.Generator()
+    generator.manual_seed(int(args.seed))
+
+    train_loader = DataLoader(
+        train_ds,
+        batch_size=int(args.batch_size),
+        shuffle=True,
+        num_workers=int(args.num_workers),
+        pin_memory=(device.type == "cuda"),
+        generator=generator,
+    )
+    train_eval_loader = DataLoader(
+        train_ds,
+        batch_size=int(args.batch_size),
+        shuffle=False,
+        num_workers=int(args.num_workers),
+        pin_memory=(device.type == "cuda"),
+    )
+    val_loader = DataLoader(
+        val_ds,
+        batch_size=int(args.batch_size),
+        shuffle=False,
+        num_workers=int(args.num_workers),
+        pin_memory=(device.type == "cuda"),
+    )
+
+    model = FusionAblationTransformer(
+        run_id=args.run_id,
+        num_bins=B,
+        n_features=n_features,
+        num_classes=num_classes,
+        value_dim=int(args.value_dim),
+        feature_dim=int(args.feature_dim),
+        hidden_dim=int(args.hidden_dim),
+        num_layers=int(args.num_layers),
+        num_heads=int(args.num_heads),
+        dropout=float(args.dropout),
+        classifier_hidden_dim=int(args.classifier_hidden_dim),
+        classifier_dropout=float(args.classifier_dropout),
+        norm_first=bool(args.norm_first),
+        gate_init=float(args.gate_init),
+        activation=str(cfg("MODEL_ACTIVATION", "gelu")),
+    ).to(device)
+
+    d1a_aux_info: Dict[str, object] = {"enabled": False}
+    if float(args.lambda_pair) > 0.0:
+        d1a_aux_info = attach_d1a_aux_heads(
+            model,
+            label_names=label_names,
+            hidden_dim=int(args.hidden_dim),
+            aux_hidden_dim=int(args.aux_hidden_dim),
+            aux_dropout=float(args.aux_dropout),
+        )
+        d1a_aux_info["enabled"] = True
+        print(f"D1a auxiliary heads enabled: lambda_pair={float(args.lambda_pair)} info={d1a_aux_info}")
+    else:
+        print("D1a auxiliary heads disabled: lambda_pair=0.0, exact official train_one_epoch path")
+
+    config_obj["d1a"]["aux_info"] = d1a_aux_info
+
+    embedding_runtime_diagnostics = make_embedding_runtime_diagnostics(
+        model,
+        X_bin=X_train,
+        X_offset=O_train,
+        X_cont=X_train_cont,
+        X_mask=M_train,
+        device=device,
+    )
+    config_obj["embedding_runtime_diagnostics"] = embedding_runtime_diagnostics
+    _train_mod.save_json(out_dir / "config.json", config_obj)
+
+    if args.use_class_weights:
+        weights = _train_mod.compute_class_weights(y_train, num_classes).to(device)
+        criterion = nn.CrossEntropyLoss(weight=weights)
+        class_weights_log = weights.detach().cpu().numpy().tolist()
+    else:
+        criterion = nn.CrossEntropyLoss()
+        class_weights_log = None
+
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=float(args.lr),
+        weight_decay=float(args.weight_decay),
+    )
+
+    _train_mod.save_json(out_dir / "class_weights.json", {
+        "use_class_weights": bool(args.use_class_weights),
+        "class_weights": class_weights_log,
+        "label_names": label_names,
+        "train_counts": np.bincount(y_train, minlength=num_classes).astype(int).tolist(),
+        "val_counts": np.bincount(y_val, minlength=num_classes).astype(int).tolist(),
+    })
+
+    print("===== fusion ablation training start =====")
+    print(f"run_id: {args.run_id}")
+    print(f"spec: {spec}")
+    print(f"run_dir: {out_dir}")
+    print(f"device: {device}")
+    print(f"dataset: {dataset_path}")
+    print(f"continuous_info: {continuous_info}")
+    print(f"selective_info: {selective_info}")
+    print(f"train bin/offset/continuous/mask shape: {X_train.shape}/{O_train.shape}/{X_train_cont.shape}/{M_train.shape}")
+    print(f"val bin/offset/continuous/mask shape:   {X_val.shape}/{O_val.shape}/{X_val_cont.shape}/{M_val.shape}")
+    print(f"classes: {num_classes} {label_names}")
+    print(f"strategy_counts: {meta.get('strategy_counts', {})}")
+    print(f"boundary last-bin train cell ratio: {boundary_data_diagnostics['train']['last_bin_cell_ratio']:.6f}")
+    print(f"boundary last-bin val cell ratio:   {boundary_data_diagnostics['val']['last_bin_cell_ratio']:.6f}")
+    print(f"last-bin offset sensitivity L2:     {embedding_runtime_diagnostics.get('last_bin_offset_sensitivity_l2')}")
+    print(f"boundary collapse fixed:            {embedding_runtime_diagnostics.get('last_bin_boundary_collapse_fixed')}")
+
+    if bool(args.diagnostic_only):
+        diagnostic_only_obj = {
+            "run_id": args.run_id,
+            "spec": spec,
+            "dataset_npz": str(dataset_path),
+            "metadata_json": str(metadata_path),
+            "boundary_data_diagnostics": boundary_data_diagnostics,
+            "embedding_runtime_diagnostics": embedding_runtime_diagnostics,
+            "continuous_info": continuous_info,
+            "selective_info": selective_info,
+            "data_shapes": config_obj["data_shapes"],
+            "model_config": config_obj["model"],
+            "note": "Diagnostic-only run exited before training.",
+        }
+        _train_mod.save_json(out_dir / "diagnostics_only.json", diagnostic_only_obj)
+        print("diagnostic-only mode: exiting before training")
+        print(f"diagnostics_only:       {out_dir / 'diagnostics_only.json'}")
+        return
+
+    history: List[Dict[str, object]] = []
+    best_metric = -math.inf
+    best_epoch = -1
+    best_train_eval = None
+    best_val_eval = None
+    best_aux_pair_eval: List[Dict[str, object]] = []
+    bad_epochs = 0
+
+    for epoch in range(1, int(args.epochs) + 1):
+        t0 = time.time()
+
+        lr_epoch = _train_mod.compute_epoch_lr(
+            base_lr=float(args.lr),
+            epoch=epoch,
+            total_epochs=int(args.epochs),
+            scheduler_name=str(args.scheduler),
+            warmup_epochs=int(args.warmup_epochs),
+            min_lr_ratio=float(args.min_lr_ratio),
+        )
+        _train_mod.set_optimizer_lr(optimizer, lr_epoch)
+
+        if float(args.lambda_pair) > 0.0:
+            train_step = train_one_epoch_d1a(
+                model=model,
+                loader=train_loader,
+                criterion=criterion,
+                optimizer=optimizer,
+                device=device,
+                grad_clip_norm=float(args.grad_clip_norm),
+                lambda_pair=float(args.lambda_pair),
+            )
+            train_step_loss = float(train_step["loss"])
+            train_step_main_loss = float(train_step["main_loss"])
+            train_step_pair_loss = float(train_step["pair_loss"])
+        else:
+            train_step_loss = _train_mod.train_one_epoch(
+                model=model,
+                loader=train_loader,
+                criterion=criterion,
+                optimizer=optimizer,
+                device=device,
+                grad_clip_norm=float(args.grad_clip_norm),
+            )
+            train_step_main_loss = float(train_step_loss)
+            train_step_pair_loss = 0.0
+
+        train_eval = _train_mod.evaluate(model, train_eval_loader, criterion, device, num_classes, label_names)
+        val_eval = _train_mod.evaluate(model, val_loader, criterion, device, num_classes, label_names)
+
+        row = {
+            "epoch": epoch,
+            "lr": float(lr_epoch),
+            "epoch_seconds": round(time.time() - t0, 3),
+            "train_step_loss": float(train_step_loss),
+            "train_step_main_loss": float(train_step_main_loss),
+            "train_step_pair_loss": float(train_step_pair_loss),
+            "train_loss": float(train_eval["loss"]),
+            "train_acc": float(train_eval["accuracy"]),
+            "train_macro_f1": float(train_eval["macro_f1"]),
+            "train_weighted_f1": float(train_eval["weighted_f1"]),
+            "train_malware_avg_f1": malware_avg_f1(train_eval),
+            "val_loss": float(val_eval["loss"]),
+            "val_acc": float(val_eval["accuracy"]),
+            "val_macro_f1": float(val_eval["macro_f1"]),
+            "val_weighted_f1": float(val_eval["weighted_f1"]),
+            "val_malware_avg_f1": malware_avg_f1(val_eval),
+            "macro_f1_gap_train_minus_val": float(train_eval["macro_f1"] - val_eval["macro_f1"]),
+        }
+        row.update(model.embedding_extra_summary())
+        history.append(row)
+        _train_mod.write_history_csv(out_dir / "history.csv", history)
+
+        metric = float(val_eval["macro_f1"])
+        improved = metric > best_metric + float(args.min_delta)
+
+        if improved:
+            best_metric = metric
+            best_epoch = epoch
+            best_train_eval = train_eval
+            best_val_eval = val_eval
+            best_aux_pair_eval = evaluate_d1a_aux_pairs(model=model, loader=val_loader, device=device)
+            bad_epochs = 0
+            torch.save(
+                {
+                    "model_state_dict": model.state_dict(),
+                    "epoch": epoch,
+                    "best_val_macro_f1": best_metric,
+                    "config": config_obj,
+                    "metadata": meta,
+                    "continuous_info": continuous_info,
+                    "selective_info": selective_info,
+                    "d1a_aux_info": d1a_aux_info,
+                },
+                out_dir / "best_model.pt",
+            )
+        else:
+            bad_epochs += 1
+
+        print(
+            f"[{args.run_id} epoch {epoch:03d}] "
+            f"lr={lr_epoch:.6g} "
+            f"train_macro={row['train_macro_f1']:.4f} "
+            f"train_malware={row['train_malware_avg_f1']:.4f} "
+            f"val_macro={row['val_macro_f1']:.4f} "
+            f"val_malware={row['val_malware_avg_f1']:.4f} "
+            f"gap={row['macro_f1_gap_train_minus_val']:.4f} "
+            f"best={best_metric:.4f}@{best_epoch}"
+        )
+
+        if bad_epochs >= int(args.patience):
+            print(f"early stop: bad_epochs={bad_epochs}, patience={args.patience}")
+            break
+
+    torch.save(
+        {
+            "model_state_dict": model.state_dict(),
+            "epoch": int(history[-1]["epoch"]) if history else -1,
+            "config": config_obj,
+            "metadata": meta,
+            "continuous_info": continuous_info,
+            "selective_info": selective_info,
+        },
+        out_dir / "last_model.pt",
+    )
+
+    if best_train_eval is None or best_val_eval is None:
+        raise RuntimeError("No best eval was recorded.")
+
+    train_report = strip_eval(best_train_eval)
+    val_report = strip_eval(best_val_eval)
+
+    _train_mod.save_json(out_dir / "train_classification_report_best.json", train_report)
+    _train_mod.save_json(out_dir / "val_classification_report_best.json", val_report)
+    _train_mod.save_json(out_dir / "d1a_aux_pair_metrics_best.json", best_aux_pair_eval)
+    if best_aux_pair_eval:
+        pd.DataFrame(best_aux_pair_eval).to_csv(out_dir / "d1a_aux_pair_metrics_best.csv", index=False)
+
+    _train_mod.write_confusion_outputs(out_dir, "train", best_train_eval, label_names)
+    _train_mod.write_confusion_outputs(out_dir, "val", best_val_eval, label_names)
+
+    _train_mod.write_predictions_csv(
+        out_dir / "val_predictions_best.csv",
+        best_val_eval["y_true"],
+        best_val_eval["y_pred"],
+        best_val_eval["confidence"],
+        label_names,
+    )
+
+    diagnosis = make_diagnosis_summary(
+        args=args,
+        spec=spec,
+        best_epoch=best_epoch,
+        best_train=best_train_eval,
+        best_val=best_val_eval,
+        metadata=meta,
+        continuous_info=continuous_info,
+        selective_info=selective_info,
+        boundary_data_diagnostics=boundary_data_diagnostics,
+        embedding_runtime_diagnostics=embedding_runtime_diagnostics,
+        model=model,
+    )
+    diagnosis["d1a"] = {
+        "enabled": bool(float(args.lambda_pair) > 0.0),
+        "lambda_pair": float(args.lambda_pair),
+        "aux_hidden_dim": int(args.aux_hidden_dim),
+        "aux_dropout": float(args.aux_dropout),
+        "aux_pair_metrics_best": best_aux_pair_eval,
+        "guardrail": "Inference uses main 4-class logits only; auxiliary pair heads are training losses, not post-hoc rerankers.",
+    }
+    _train_mod.save_json(out_dir / "diagnosis_summary.json", diagnosis)
+
+    print("===== fusion ablation training done =====")
+    print(f"run_id:                {args.run_id}")
+    print(f"representation:        {diagnosis['representation']}")
+    print(f"best_epoch:            {best_epoch}")
+    print(f"train_macro_f1:        {diagnosis['train']['macro_f1']:.6f}")
+    print(f"train_malware_avg_f1: {diagnosis['train']['malware_only_avg_f1']:.6f}")
+    print(f"val_macro_f1:          {diagnosis['val']['macro_f1']:.6f}")
+    print(f"val_malware_avg_f1:   {diagnosis['val']['malware_only_avg_f1']:.6f}")
+    print(f"gap:                   {diagnosis['generalization_gap_macro_f1']:.6f}")
+    print(f"diagnosis:             {out_dir / 'diagnosis_summary.json'}")
+
+
+if __name__ == "__main__":
+    main()
