@@ -29,6 +29,14 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
+import sys
+
+# This file lives in 05_test, while official config/train_utils live in 02_src.
+# Add 02_src explicitly so the fork can import official modules without moving files.
+_REPO_ROOT_FOR_IMPORT = Path(__file__).resolve().parents[1]
+_SRC_DIR_FOR_IMPORT = _REPO_ROOT_FOR_IMPORT / "02_src"
+if str(_SRC_DIR_FOR_IMPORT) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR_FOR_IMPORT))
 
 import numpy as np
 import pandas as pd
