@@ -1,0 +1,174 @@
+{
+  "stage": "D1c_pair_attention_audit",
+  "purpose": "Audit D1b pair-specific attention branch; no training.",
+  "inputs": {
+    "d1b_run_dir": "/home/pak/Documents/src_baocao/05_test/outputs/D1b_official_fork_lam0p01",
+    "checkpoint": "/home/pak/Documents/src_baocao/05_test/outputs/D1b_official_fork_lam0p01/best_model.pt",
+    "baseline_pred": "/home/pak/Documents/src_baocao/03_outputs/06_model/val_predictions_best.csv",
+    "d1b_pred": "/home/pak/Documents/src_baocao/05_test/outputs/D1b_official_fork_lam0p01/val_predictions_best.csv",
+    "dataset_npz": "/home/pak/Documents/src_baocao/03_outputs/05_dataset/dataset.npz",
+    "metadata_json": "/home/pak/Documents/src_baocao/03_outputs/05_dataset/metadata.json",
+    "train_raw": "/home/pak/Documents/src_baocao/01_split/train_raw.csv",
+    "val_raw": "/home/pak/Documents/src_baocao/01_split/val_raw.csv",
+    "d1b_script": "/home/pak/Documents/src_baocao/05_test/D1b_train_official_fork.py"
+  },
+  "label_names": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "n_features": 55,
+  "feature_names": [
+    "pslist.nproc",
+    "pslist.nppid",
+    "pslist.avg_threads",
+    "pslist.nprocs64bit",
+    "pslist.avg_handlers",
+    "dlllist.ndlls",
+    "dlllist.avg_dlls_per_proc",
+    "handles.nhandles",
+    "handles.avg_handles_per_proc",
+    "handles.nport",
+    "handles.nfile",
+    "handles.nevent",
+    "handles.ndesktop",
+    "handles.nkey",
+    "handles.nthread",
+    "handles.ndirectory",
+    "handles.nsemaphore",
+    "handles.ntimer",
+    "handles.nsection",
+    "handles.nmutant",
+    "ldrmodules.not_in_load",
+    "ldrmodules.not_in_init",
+    "ldrmodules.not_in_mem",
+    "ldrmodules.not_in_load_avg",
+    "ldrmodules.not_in_init_avg",
+    "ldrmodules.not_in_mem_avg",
+    "malfind.ninjections",
+    "malfind.commitCharge",
+    "malfind.protection",
+    "malfind.uniqueInjections",
+    "psxview.not_in_pslist",
+    "psxview.not_in_eprocess_pool",
+    "psxview.not_in_ethread_pool",
+    "psxview.not_in_pspcid_list",
+    "psxview.not_in_csrss_handles",
+    "psxview.not_in_session",
+    "psxview.not_in_deskthrd",
+    "psxview.not_in_pslist_false_avg",
+    "psxview.not_in_eprocess_pool_false_avg",
+    "psxview.not_in_ethread_pool_false_avg",
+    "psxview.not_in_pspcid_list_false_avg",
+    "psxview.not_in_csrss_handles_false_avg",
+    "psxview.not_in_session_false_avg",
+    "psxview.not_in_deskthrd_false_avg",
+    "modules.nmodules",
+    "svcscan.nservices",
+    "svcscan.kernel_drivers",
+    "svcscan.fs_drivers",
+    "svcscan.process_services",
+    "svcscan.shared_process_services",
+    "svcscan.interactive_process_services",
+    "svcscan.nactive",
+    "callbacks.ncallbacks",
+    "callbacks.nanonymous",
+    "callbacks.ngeneric"
+  ],
+  "transition_summary": {
+    "n": 11720,
+    "baseline_correct": 10242,
+    "d1b_correct": 10256,
+    "wrong_to_correct": 425,
+    "correct_to_wrong": 411,
+    "net_gain": 14,
+    "damage_ratio": 0.9670588235294117,
+    "changed_pred_n": 961,
+    "transition_counts": {
+      "both_correct": 9831,
+      "both_wrong": 1053,
+      "fixed": 425,
+      "damaged": 411
+    }
+  },
+  "d1b_config_d1b": {
+    "enabled": true,
+    "lambda_pair": 0.01,
+    "aux_hidden_dim": 0,
+    "aux_dropout": 0.1,
+    "hard_pairs": [
+      [
+        "Ransomware",
+        "Spyware"
+      ],
+      [
+        "Ransomware",
+        "Trojan"
+      ],
+      [
+        "Spyware",
+        "Trojan"
+      ]
+    ],
+    "note": "D1b fork keeps official 07_train loop; only train_one_epoch is replaced when lambda_pair > 0.",
+    "aux_info": {
+      "enabled": true,
+      "type": "pair_specific_attention_pooling",
+      "pairs": [
+        {
+          "pair_key": "Ransomware__vs__Spyware",
+          "id_a": 1,
+          "id_b": 2,
+          "label_a": "Ransomware",
+          "label_b": "Spyware"
+        },
+        {
+          "pair_key": "Ransomware__vs__Trojan",
+          "id_a": 1,
+          "id_b": 3,
+          "label_a": "Ransomware",
+          "label_b": "Trojan"
+        },
+        {
+          "pair_key": "Spyware__vs__Trojan",
+          "id_a": 2,
+          "id_b": 3,
+          "label_a": "Spyware",
+          "label_b": "Trojan"
+        }
+      ],
+      "hidden_dim": 128,
+      "aux_hidden_dim": 0,
+      "aux_dropout": 0.1
+    }
+  },
+  "continuous_info": {
+    "source": "raw_scaled",
+    "train_path": "/home/pak/Documents/src_baocao/01_split/train_raw.csv",
+    "val_path": "/home/pak/Documents/src_baocao/01_split/val_raw.csv",
+    "scale": "train_only_minmax_linear_clip_val",
+    "n_constant_features": 3,
+    "constant_features": [
+      "pslist.nprocs64bit",
+      "handles.nport",
+      "svcscan.interactive_process_services"
+    ],
+    "train_min": 0.0,
+    "train_max": 1.0,
+    "val_min": 0.0,
+    "val_max": 1.0
+  },
+  "outputs": {
+    "transition_per_sample": "/home/pak/Documents/src_baocao/05_test/outputs/D1c_audit_D1b_lam0p01/d1c_transition_per_sample.csv",
+    "top_features_by_pair": "/home/pak/Documents/src_baocao/05_test/outputs/D1c_audit_D1b_lam0p01/d1c_top_features_by_pair.csv",
+    "top_features_by_transition": "/home/pak/Documents/src_baocao/05_test/outputs/D1c_audit_D1b_lam0p01/d1c_top_features_by_transition.csv",
+    "direction_attention_summary": "/home/pak/Documents/src_baocao/05_test/outputs/D1c_audit_D1b_lam0p01/d1c_direction_attention_summary.csv",
+    "changed_samples_top_features": "/home/pak/Documents/src_baocao/05_test/outputs/D1c_audit_D1b_lam0p01/d1c_changed_samples_top_features.csv",
+    "pair_attention_stats": "/home/pak/Documents/src_baocao/05_test/outputs/D1c_audit_D1b_lam0p01/d1c_pair_attention_stats.csv"
+  },
+  "interpretation_hint": {
+    "good_sign": "fixed samples and damaged samples attend to clearly different features/patterns; useful for selective decision rule design.",
+    "bad_sign": "fixed and damaged samples attend to nearly the same features; pair branch is not clean enough and mostly shifts boundary."
+  }
+}

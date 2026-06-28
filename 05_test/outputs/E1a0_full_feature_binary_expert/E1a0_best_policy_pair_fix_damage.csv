@@ -1,0 +1,10 @@
+scope,pair,direction,n_true_pair,fixed,damaged,net,damage_ratio,baseline_confusion_count,new_confusion_count,confusion_delta_new_minus_base
+pair_true_labels,Ransomware<->Spyware,BIDIR,3963,246,189,57,0.7682926829268293,,,
+hard_direction,Ransomware<->Spyware,Ransomware->Spyware,1959,64,29,35,0.453125,302.0,263.0,-39.0
+hard_direction,Ransomware<->Spyware,Spyware->Ransomware,2004,34,44,-10,1.2941176470588236,144.0,151.0,7.0
+pair_true_labels,Ransomware<->Trojan,BIDIR,3856,303,154,149,0.5082508250825083,,,
+hard_direction,Ransomware<->Trojan,Ransomware->Trojan,1959,109,64,45,0.5871559633027523,301.0,260.0,-41.0
+hard_direction,Ransomware<->Trojan,Trojan->Ransomware,1897,74,47,27,0.6351351351351351,295.0,275.0,-20.0
+pair_true_labels,Spyware<->Trojan,BIDIR,3901,203,157,46,0.7733990147783252,,,
+hard_direction,Spyware<->Trojan,Spyware->Trojan,2004,39,52,-13,1.3333333333333333,217.0,233.0,16.0
+hard_direction,Spyware<->Trojan,Trojan->Spyware,1897,56,14,42,0.25,213.0,164.0,-49.0

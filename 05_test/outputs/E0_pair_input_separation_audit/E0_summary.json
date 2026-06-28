@@ -1,0 +1,99 @@
+{
+  "stage": "E0_pair_input_separation_audit",
+  "purpose": "Audit pair-specific input/feature separability without training.",
+  "inputs": {
+    "dataset_npz": "/home/pak/Documents/src_baocao/03_outputs/05_dataset/dataset.npz",
+    "metadata_json": "/home/pak/Documents/src_baocao/03_outputs/05_dataset/metadata.json",
+    "train_raw": "/home/pak/Documents/src_baocao/01_split/train_raw.csv",
+    "val_raw": "/home/pak/Documents/src_baocao/01_split/val_raw.csv",
+    "baseline_pred": "/home/pak/Documents/src_baocao/03_outputs/06_model/val_predictions_best.csv",
+    "d1b_pred": "/home/pak/Documents/src_baocao/05_test/outputs/D1b_official_fork_lam0p01/val_predictions_best.csv",
+    "official_train": "/home/pak/Documents/src_baocao/02_src/07_train.py",
+    "d1c_top_features_by_transition": "/home/pak/Documents/src_baocao/05_test/outputs/D1c_audit_D1b_lam0p01/d1c_top_features_by_transition.csv"
+  },
+  "label_names": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "n_val": 11720,
+  "n_features": 55,
+  "num_bins": 512,
+  "representations_audited": [
+    "raw_scaled",
+    "bin_norm",
+    "offset",
+    "d3_scalar"
+  ],
+  "hard_pairs": [
+    "Ransomware<->Spyware",
+    "Ransomware<->Trojan",
+    "Spyware<->Trojan"
+  ],
+  "transition_counts": {
+    "both_correct": 9831,
+    "both_wrong": 1053,
+    "fixed": 425,
+    "damaged": 411
+  },
+  "best_rep_per_pair_by_mean_separation_score": [
+    {
+      "pair": "Ransomware<->Spyware",
+      "rep": "raw_scaled",
+      "topn": 20,
+      "mean_auc_best": 0.5387733848280978,
+      "max_auc_best": 0.5566409294733656,
+      "mean_ks": 0.10088429572707569,
+      "max_ks": 0.13089746999110508,
+      "mean_abs_cohens_d": 0.13791488264583102,
+      "mean_iqr_overlap_ratio": 0.7473128462630603,
+      "min_iqr_overlap_ratio": 0.6000001305342014,
+      "mean_separation_score": 0.13696118714813635,
+      "top_features": "callbacks.ncallbacks, psxview.not_in_session_false_avg, pslist.avg_threads, dlllist.avg_dlls_per_proc, psxview.not_in_csrss_handles_false_avg, ldrmodules.not_in_load_avg, ldrmodules.not_in_mem_avg, psxview.not_in_ethread_pool_false_avg, psxview.not_in_ethread_pool, psxview.not_in_pslist_false_avg"
+    },
+    {
+      "pair": "Ransomware<->Trojan",
+      "rep": "raw_scaled",
+      "topn": 20,
+      "mean_auc_best": 0.5547328833603367,
+      "max_auc_best": 0.6073102986553821,
+      "mean_ks": 0.11434635381138322,
+      "max_ks": 0.2097866570439933,
+      "mean_abs_cohens_d": 0.09009835065603704,
+      "mean_iqr_overlap_ratio": 0.815513234260185,
+      "min_iqr_overlap_ratio": 0.5074404530550047,
+      "mean_separation_score": 0.17255307005719736,
+      "top_features": "ldrmodules.not_in_mem_avg, ldrmodules.not_in_load_avg, ldrmodules.not_in_init_avg, dlllist.avg_dlls_per_proc, handles.nfile, ldrmodules.not_in_load, ldrmodules.not_in_mem, pslist.nproc, psxview.not_in_session_false_avg, pslist.avg_threads"
+    },
+    {
+      "pair": "Spyware<->Trojan",
+      "rep": "d3_scalar",
+      "topn": 20,
+      "mean_auc_best": 0.5315039530848686,
+      "max_auc_best": 0.5652084076443844,
+      "mean_ks": 0.12403886218075177,
+      "max_ks": 0.1903401946765404,
+      "mean_abs_cohens_d": 0.13044703185256407,
+      "mean_iqr_overlap_ratio": 0.8395795924484446,
+      "min_iqr_overlap_ratio": 0.6866666064275662,
+      "mean_separation_score": 0.14571070307615314,
+      "top_features": "ldrmodules.not_in_mem_avg, ldrmodules.not_in_load_avg, callbacks.ncallbacks, ldrmodules.not_in_init_avg, handles.nfile, malfind.commitCharge, handles.avg_handles_per_proc, malfind.ninjections, malfind.protection, handles.nsection"
+    }
+  ],
+  "outputs": {
+    "feature_rank": "/home/pak/Documents/src_baocao/05_test/outputs/E0_pair_input_separation_audit/E0_pair_feature_rank.csv",
+    "overlap_stats": "/home/pak/Documents/src_baocao/05_test/outputs/E0_pair_input_separation_audit/E0_pair_feature_overlap_stats.csv",
+    "direction_shift": "/home/pak/Documents/src_baocao/05_test/outputs/E0_pair_input_separation_audit/E0_pair_direction_feature_shift.csv",
+    "interaction_candidates": "/home/pak/Documents/src_baocao/05_test/outputs/E0_pair_input_separation_audit/E0_pair_interaction_candidates.csv",
+    "d1c_attention_vs_feature_signal": "/home/pak/Documents/src_baocao/05_test/outputs/E0_pair_input_separation_audit/E0_d1c_attention_vs_feature_signal.csv",
+    "prediction_context": "/home/pak/Documents/src_baocao/05_test/outputs/E0_pair_input_separation_audit/E0_prediction_context.csv",
+    "readme": "/home/pak/Documents/src_baocao/05_test/outputs/E0_pair_input_separation_audit/E0_readme_summary.md"
+  },
+  "interpretation_hint": {
+    "strong_single_feature_signal": "AUC_best high, KS high, IQR overlap low for raw_scaled/d3_scalar.",
+    "strong_interaction_signal": "Interaction candidates outperform best single features for the same pair.",
+    "weak_signal": "All reps have AUC close to 0.5, low KS, high IQR overlap.",
+    "d1c_mismatch": "D1c attention high on features with low input separation suggests attention is not a clean expert signal."
+  }
+}
