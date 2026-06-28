@@ -1,0 +1,79 @@
+{
+  "experiment": "F1e1a_v4_clean_calibration_family_smoothing",
+  "role": "derive locked family smoothing matrix from train_inner/calibration; no validation used",
+  "class_names": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "malware_classes": [
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "model_config": {
+    "num_bins": 512,
+    "n_features": 55,
+    "num_classes": 4,
+    "value_dim": 32,
+    "feature_dim": 32,
+    "hidden_dim": 128,
+    "num_layers": 1,
+    "num_heads": 4,
+    "dropout": 0.1,
+    "classifier_hidden_dim": 128,
+    "classifier_dropout": 0.1,
+    "gate_init": 0.0
+  },
+  "training": {
+    "dataset_npz": "03_outputs/05_dataset/dataset.npz",
+    "train_raw": "01_split/train_raw.csv",
+    "base_config": "03_outputs/06_model/config.json",
+    "out_dir": "05_test/outputs/F1e1a_v4_clean_calibration_family_smoothing",
+    "combined_zip": "05_test/outputs/F1e1a_v4_clean_calibration_family_smoothing.zip",
+    "class_names": "Benign,Ransomware,Spyware,Trojan",
+    "malware_classes": "Ransomware,Spyware,Trojan",
+    "calib_size": 0.2,
+    "eps_cap": 0.2,
+    "min_family_support": 30,
+    "device": "cuda",
+    "epochs": 80,
+    "batch_size": 512,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "warmup_epochs": 8,
+    "min_lr_ratio": 0.05,
+    "patience": 12,
+    "min_delta": 0.0001,
+    "num_workers": 2,
+    "grad_clip_norm": 1.0,
+    "seed": 42,
+    "amp": true,
+    "hidden_dim": null,
+    "num_heads": null,
+    "classifier_hidden_dim": null,
+    "dropout": null,
+    "classifier_dropout": null
+  },
+  "split": {
+    "n_train_inner": 37500,
+    "n_calibration": 9376,
+    "calib_size": 0.2,
+    "stratification": "label_L2::label_L3 fallback to L2/y for rare strata"
+  },
+  "loss": {
+    "name": "CrossEntropyLoss",
+    "class_weights": [
+      0.5,
+      1.4961698055267334,
+      1.4621022939682007,
+      1.543972373008728
+    ]
+  },
+  "methodology": {
+    "validation_used_for_matrix": false,
+    "fake_data_used": false,
+    "known_caveat": "No validation used. Existing dataset tokens/offsets are reused from prior preprocessing; fully strict nested preprocessing would rebuild tokens using train_inner only."
+  }
+}

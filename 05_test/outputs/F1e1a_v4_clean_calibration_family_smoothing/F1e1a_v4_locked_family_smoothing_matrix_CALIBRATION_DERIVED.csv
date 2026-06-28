@@ -1,0 +1,17 @@
+true_L2,true_L3,n_calibration,reliable_support,eps_cap,eps_family,source,target_Benign,target_Ransomware,target_Spyware,target_Trojan,target_sum
+Benign,Benign,4688,True,0.2,0.0,non_malware_or_benign_one_hot,1.0,0.0,0.0,0.0,1.0
+Ransomware,Ransomware-Ako,320,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.8,0.07983751624104013,0.12016248375895987,1.0
+Ransomware,Ransomware-Conti,318,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.8,0.06230132164750225,0.13769867835249777,1.0
+Ransomware,Ransomware-Maze,313,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.8,0.05996483603730754,0.14003516396269247,1.0
+Ransomware,Ransomware-Pysa,275,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.8,0.056041984367442135,0.14395801563255786,1.0
+Ransomware,Ransomware-Shade,340,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.8,0.0630568582397128,0.13694314176028724,1.0
+Spyware,Spyware-180solutions,320,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.09252357672149934,0.8,0.10747642327850065,1.0
+Spyware,Spyware-CWS,320,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.11825762617360785,0.8,0.08174237382639218,1.0
+Spyware,Spyware-Gator,352,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.11961388186787701,0.8,0.08038611813212299,1.0
+Spyware,Spyware-TIBS,226,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.14126171721262687,0.8,0.058738282787373135,1.0
+Spyware,Spyware-Transponder,386,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.11996588992087855,0.8,0.08003411007912149,1.0
+Trojan,Trojan-Emotet,315,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.13945777828404707,0.06054222171595294,0.8,1.0
+Trojan,Trojan-Reconyc,251,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.10368144540895273,0.09631855459104727,0.8,1.0
+Trojan,Trojan-Refroso,320,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.10670612497536976,0.09329387502463024,0.8,1.0
+Trojan,Trojan-Scar,320,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.10928732184708069,0.09071267815291931,0.8,1.0
+Trojan,Trojan-Zeus,312,True,0.2,0.2,CALIBRATION_DERIVED_family_prob_top2_pred_weighted,0.0,0.15731266521569312,0.04268733478430686,0.8,1.0
