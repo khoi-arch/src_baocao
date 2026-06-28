@@ -1216,7 +1216,7 @@ def main():
     parser.add_argument("--official-train", default="02_src/07_train.py")
     parser.add_argument("--baseline-config", default="03_outputs/06_model/config.json")
     parser.add_argument("--baseline-checkpoint", default="03_outputs/06_model/best_model.pt")
-    parser.add_argument("--shaped-checkpoint", default="", help="Optional E3/E3-like checkpoint. Loads backbone.* into official D3 before training ordered swapper.")
+    parser.add_argument("--shaped-checkpoint", default="05_test/checkpoints/E3a_no_tree_pair_supcon_best_model.pt", help="E3/E3-like checkpoint. Loads backbone.* into official D3 before training ordered swapper.")
     parser.add_argument("--baseline-pred", default="03_outputs/06_model/val_predictions_best.csv")
     parser.add_argument("--out-dir", default="05_test/outputs/E5_e3_shaped_ordered_pair_swapper")
     parser.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"])
