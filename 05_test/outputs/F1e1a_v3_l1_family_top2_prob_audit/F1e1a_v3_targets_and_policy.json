@@ -1,0 +1,39 @@
+{
+  "leakage_warning": "Validation-derived family candidate is diagnostic only; using it to select hyperparameters and report same val is validation leakage/tuning-to-val.",
+  "clean_recommendation": "Derive smoothing matrix from train out-of-fold or internal calibration split, lock it, then evaluate on validation/test.",
+  "class_names": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "malware_classes": [
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "eps_cap": 0.2,
+  "min_family_support": 30,
+  "split_metrics": {
+    "train": {
+      "n": 46876,
+      "accuracy": 0.9415265807662769,
+      "macro_f1": 0.9115309943122911,
+      "weighted_f1": 0.9412204109495994,
+      "mean_confidence": 0.9312663078308105,
+      "mean_top2_gap": 0.8735331892967224,
+      "true_in_top2_rate": 0.9921921665671133
+    },
+    "val": {
+      "n": 11720,
+      "accuracy": 0.8764505119453925,
+      "macro_f1": 0.8142325878367087,
+      "weighted_f1": 0.8761860311978926,
+      "mean_confidence": 0.9206541180610657,
+      "mean_top2_gap": 0.8535480499267578,
+      "true_in_top2_rate": 0.9696245733788396
+    }
+  },
+  "val_candidate_file": "F1e1a_v3_val_family_smoothing_candidate_DIAGNOSTIC_ONLY.csv",
+  "train_in_sample_candidate_file": "F1e1a_v3_train_in_sample_family_smoothing_candidate_BIASED.csv"
+}
