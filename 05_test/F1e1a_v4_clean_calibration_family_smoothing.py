@@ -572,7 +572,18 @@ def write_report(out_dir: Path, ds_info: Dict[str, Any], config: Dict[str, Any],
     lines.append("```")
 
     lines.append("\n## Temporary calibration model metrics\n")
-    lines.append(pd.DataFrame([{"split": k, **v} for k, v in split_metrics.items()]).to_markdown(index=False))
+    metric_rows = []
+    scalar_rows = []
+    for k, v in split_metrics.items():
+        if isinstance(v, dict):
+            metric_rows.append({"split": k, **v})
+        else:
+            scalar_rows.append({"metric": k, "value": v})
+    if metric_rows:
+        lines.append(pd.DataFrame(metric_rows).to_markdown(index=False))
+    if scalar_rows:
+        lines.append("\nAdditional scalar metrics:")
+        lines.append(pd.DataFrame(scalar_rows).to_markdown(index=False))
 
     lines.append("\n## Calibration family summary: hardest families\n")
     cal = fam[fam["split"] == "calibration"].copy()
