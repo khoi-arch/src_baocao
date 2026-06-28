@@ -22,6 +22,10 @@ This is still attention-based:
   correction head is trainable.
   optional finetune_all updates the attention backbone too.
 
+v2 fix
+------
+Compatible with PyTorch >=2.6 checkpoint loading by using weights_only=False for the trusted local baseline checkpoint.
+
 Modes
 -----
 1) eval_zero
@@ -299,8 +303,24 @@ def extract_state_dict(ckpt: Any) -> Dict[str, torch.Tensor]:
     raise ValueError("Cannot extract model state dict from checkpoint")
 
 
+def safe_torch_load_checkpoint(ckpt_path: Path, device: torch.device):
+    """
+    PyTorch >=2.6 changed torch.load default to weights_only=True.
+    Older training checkpoints may contain small metadata objects such as
+    torch.torch_version.TorchVersion, which makes weights_only=True fail.
+
+    This script loads only the user's own official baseline checkpoint inside
+    the current repo, so fallback to weights_only=False is intentional here.
+    """
+    try:
+        return torch.load(ckpt_path, map_location=device, weights_only=False)
+    except TypeError:
+        # Older PyTorch versions do not have weights_only.
+        return torch.load(ckpt_path, map_location=device)
+
+
 def load_checkpoint_into_model(model: nn.Module, ckpt_path: Path, device: torch.device, strict: bool = True) -> dict:
-    ckpt = torch.load(ckpt_path, map_location=device)
+    ckpt = safe_torch_load_checkpoint(ckpt_path, device)
     sd = extract_state_dict(ckpt)
     # Strip common prefixes.
     cleaned = {}
