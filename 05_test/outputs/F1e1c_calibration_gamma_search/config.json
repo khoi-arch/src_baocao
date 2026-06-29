@@ -1,0 +1,93 @@
+{
+  "experiment": "F1e1c_calibration_gamma_search",
+  "methodology": {
+    "validation_used": false,
+    "gamma_selected_by": "calibration_macro_f1",
+    "epochs_fixed": 49,
+    "matrix_source": "/kaggle/working/src_baocao/05_test/outputs/F1e1a_v4c_prob_only_calibration_family_matrix/F1e1a_v4c_locked_family_smoothing_matrix_PROB_ONLY_CALIBRATION_DERIVED.csv"
+  },
+  "dataset_info": {
+    "dataset_npz": "/kaggle/working/src_baocao/03_outputs/05_dataset/dataset.npz",
+    "train_raw": "/kaggle/working/src_baocao/01_split/train_raw.csv",
+    "val_raw_not_used": "/kaggle/working/src_baocao/01_split/val_raw.csv",
+    "keys": [
+      "X_train_bin",
+      "X_train_offset",
+      "y_train",
+      "X_val_bin",
+      "X_val_offset",
+      "y_val",
+      "feature_names",
+      "label_names",
+      "K",
+      "num_bins"
+    ],
+    "n_train": 46876,
+    "n_features": 55,
+    "num_bins": 512,
+    "label_L2_col": "label_L2",
+    "label_L3_col": "label_L3",
+    "L3_unique_count": 16,
+    "values_candidate": "offset_raw_one"
+  },
+  "split_info": {
+    "source": "/kaggle/working/src_baocao/05_test/outputs/F1e1a_v4_clean_calibration_family_smoothing/F1e1a_v4_split_indices.npz",
+    "train_key": "train_inner_idx",
+    "calib_key": "calibration_idx",
+    "n_train_inner": 37500,
+    "n_calibration": 9376
+  },
+  "gamma_grid": [
+    0.0,
+    0.125,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "args": {
+    "dataset_npz": "03_outputs/05_dataset/dataset.npz",
+    "train_raw": "01_split/train_raw.csv",
+    "val_raw": "01_split/val_raw.csv",
+    "base_config": "03_outputs/06_model/config.json",
+    "v4_dir": "05_test/outputs/F1e1a_v4_clean_calibration_family_smoothing",
+    "matrix_csv": "05_test/outputs/F1e1a_v4c_prob_only_calibration_family_matrix/F1e1a_v4c_locked_family_smoothing_matrix_PROB_ONLY_CALIBRATION_DERIVED.csv",
+    "out_dir": "05_test/outputs/F1e1c_calibration_gamma_search",
+    "combined_zip": "05_test/outputs/F1e1c_calibration_gamma_search.zip",
+    "class_names": "Benign,Ransomware,Spyware,Trojan",
+    "gamma_grid": "0.0,0.125,0.25,0.5,0.75,1.0",
+    "epochs": 49,
+    "calib_size": 0.2,
+    "batch_size": 512,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "warmup_epochs": 8,
+    "min_lr_ratio": 0.05,
+    "grad_clip_norm": 1.0,
+    "num_workers": 2,
+    "seed": 42,
+    "device": "cuda",
+    "amp": true,
+    "no_class_weights": false,
+    "save_models": false,
+    "hidden_dim": null,
+    "num_heads": null,
+    "classifier_hidden_dim": null,
+    "dropout": null,
+    "classifier_dropout": null
+  },
+  "model_config": {
+    "num_bins": 512,
+    "n_features": 55,
+    "num_classes": 4,
+    "value_dim": 32,
+    "feature_dim": 32,
+    "hidden_dim": 128,
+    "num_layers": 1,
+    "num_heads": 4,
+    "dropout": 0.1,
+    "classifier_hidden_dim": 128,
+    "classifier_dropout": 0.1,
+    "gate_init": 0.0
+  }
+}

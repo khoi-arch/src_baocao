@@ -1,0 +1,54 @@
+{
+  "selected_gamma": 0.125,
+  "selection_metric": "calibration_macro_f1",
+  "selected_row": {
+    "gamma": 0.125,
+    "train_inner_accuracy": 0.92632,
+    "train_inner_macro_f1": 0.8884005643533182,
+    "train_inner_weighted_f1": 0.9258611447801616,
+    "calibration_accuracy": 0.8502559726962458,
+    "calibration_macro_f1": 0.7741612023752941,
+    "calibration_weighted_f1": 0.8496823001611946,
+    "gap_train_inner_minus_calibration_macro_f1": 0.11423936197802409
+  },
+  "validation_used": false,
+  "target_info_by_gamma": {
+    "0.0": {
+      "gamma": 0.0,
+      "matched": 46876,
+      "fallback_onehot": 0,
+      "missing_top": []
+    },
+    "0.125": {
+      "gamma": 0.125,
+      "matched": 46876,
+      "fallback_onehot": 0,
+      "missing_top": []
+    },
+    "0.25": {
+      "gamma": 0.25,
+      "matched": 46876,
+      "fallback_onehot": 0,
+      "missing_top": []
+    },
+    "0.5": {
+      "gamma": 0.5,
+      "matched": 46876,
+      "fallback_onehot": 0,
+      "missing_top": []
+    },
+    "0.75": {
+      "gamma": 0.75,
+      "matched": 46876,
+      "fallback_onehot": 0,
+      "missing_top": []
+    },
+    "1.0": {
+      "gamma": 1.0,
+      "matched": 46876,
+      "fallback_onehot": 0,
+      "missing_top": []
+    }
+  },
+  "locked_matrix_file": "F1e1c_locked_scaled_matrix_CALIBRATION_SELECTED.csv"
+}
