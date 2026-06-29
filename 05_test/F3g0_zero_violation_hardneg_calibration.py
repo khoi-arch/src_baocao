@@ -440,6 +440,16 @@ def main():
     zvh_row = res[res["run_name"] == "zero_margin_online_hardneg"].iloc[0].to_dict()
     delta = float(zvh_row["calibration_macro_f1"] - base_row["calibration_macro_f1"])
 
+    base_run_dir = Path(base_row["run_dir"])
+    method_run_dir = Path(zvh_row["run_dir"])
+    fix_damage_summary = compute_fix_damage(base_run_dir, method_run_dir, label_names, out_dir)
+
+    proceed = (
+        delta > 0
+        and int(fix_damage_summary.get("net_fixed_minus_damaged", -999999)) > 0
+        and float(fix_damage_summary.get("damage_over_fix", 999999.0)) <= 1.0
+    )
+
     decision = {
         "official_validation_used": False,
         "uses_fixed_hard_pairs": False,
