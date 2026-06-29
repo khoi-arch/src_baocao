@@ -174,43 +174,93 @@ def make_subset_npz_and_raw(dataset_npz: Path, train_raw: Path, out_dir: Path, t
 
 
 def read_metrics(run_dir: Path, label_names: List[str]) -> Dict[str, Any]:
-    train_rep = json.loads((run_dir / "train_classification_report_best.json").read_text(encoding="utf-8"))
-    val_rep = json.loads((run_dir / "val_classification_report_best.json").read_text(encoding="utf-8"))
+    """
+    Read metrics from official trainer output.
+
+    Preferred:
+        train_classification_report_best.json / val_classification_report_best.json
+
+    Fallback:
+        diagnosis_summary.json + history.csv, because some official runs only
+        persist reports under different names/layouts.
+    """
     hist = pd.read_csv(run_dir / "history.csv")
-    best_epoch = int(hist.sort_values("val_macro_f1", ascending=False).iloc[0]["epoch"]) if "val_macro_f1" in hist.columns else -1
+    if "val_macro_f1" in hist.columns:
+        best_hist_row = hist.sort_values("val_macro_f1", ascending=False).iloc[0]
+        best_epoch = int(best_hist_row["epoch"])
+    else:
+        best_epoch = -1
+        best_hist_row = hist.iloc[-1]
 
-    def get_macro(rep):
-        if "macro_avg" in rep:
-            return float(rep["macro_avg"]["f1"])
-        if "macro avg" in rep:
-            return float(rep["macro avg"]["f1-score"])
-        return float(rep.get("macro_f1", np.nan))
+    train_rep_path = run_dir / "train_classification_report_best.json"
+    val_rep_path = run_dir / "val_classification_report_best.json"
 
-    def get_weighted(rep):
-        if "weighted_avg" in rep:
-            return float(rep["weighted_avg"]["f1"])
-        if "weighted avg" in rep:
-            return float(rep["weighted avg"]["f1-score"])
-        return float(rep.get("weighted_f1", np.nan))
+    def from_report(train_rep, val_rep) -> Dict[str, Any]:
+        def get_macro(rep):
+            if "macro_avg" in rep:
+                return float(rep["macro_avg"].get("f1", rep["macro_avg"].get("f1-score", np.nan)))
+            if "macro avg" in rep:
+                return float(rep["macro avg"].get("f1-score", rep["macro avg"].get("f1", np.nan)))
+            return float(rep.get("macro_f1", np.nan))
 
-    def get_acc(rep):
-        return float(rep.get("accuracy", np.nan))
+        def get_weighted(rep):
+            if "weighted_avg" in rep:
+                return float(rep["weighted_avg"].get("f1", rep["weighted_avg"].get("f1-score", np.nan)))
+            if "weighted avg" in rep:
+                return float(rep["weighted avg"].get("f1-score", rep["weighted avg"].get("f1", np.nan)))
+            return float(rep.get("weighted_f1", np.nan))
 
+        def get_acc(rep):
+            return float(rep.get("accuracy", np.nan))
+
+        row = {
+            "best_epoch": best_epoch,
+            "train_macro_f1": get_macro(train_rep),
+            "calibration_macro_f1": get_macro(val_rep),
+            "train_weighted_f1": get_weighted(train_rep),
+            "calibration_weighted_f1": get_weighted(val_rep),
+            "train_accuracy": get_acc(train_rep),
+            "calibration_accuracy": get_acc(val_rep),
+        }
+        row["gap_train_minus_calibration_macro_f1"] = row["train_macro_f1"] - row["calibration_macro_f1"]
+        for cls in label_names:
+            if cls in val_rep:
+                d = val_rep[cls]
+                row[f"calib_f1_{cls}"] = float(d.get("f1", d.get("f1-score", np.nan)))
+        return row
+
+    if train_rep_path.exists() and val_rep_path.exists():
+        train_rep = json.loads(train_rep_path.read_text(encoding="utf-8"))
+        val_rep = json.loads(val_rep_path.read_text(encoding="utf-8"))
+        return from_report(train_rep, val_rep)
+
+    diag_path = run_dir / "diagnosis_summary.json"
+    if diag_path.exists():
+        diag = json.loads(diag_path.read_text(encoding="utf-8"))
+        # Official diagnosis usually stores flat metrics.
+        row = {
+            "best_epoch": int(diag.get("best_epoch", best_epoch)),
+            "train_macro_f1": float(diag.get("train_macro_f1", best_hist_row.get("train_macro_f1", np.nan))),
+            "calibration_macro_f1": float(diag.get("val_macro_f1", best_hist_row.get("val_macro_f1", np.nan))),
+            "train_weighted_f1": float(diag.get("train_weighted_f1", best_hist_row.get("train_weighted_f1", np.nan))),
+            "calibration_weighted_f1": float(diag.get("val_weighted_f1", best_hist_row.get("val_weighted_f1", np.nan))),
+            "train_accuracy": float(diag.get("train_accuracy", best_hist_row.get("train_accuracy", np.nan))),
+            "calibration_accuracy": float(diag.get("val_accuracy", best_hist_row.get("val_accuracy", np.nan))),
+        }
+        row["gap_train_minus_calibration_macro_f1"] = row["train_macro_f1"] - row["calibration_macro_f1"]
+        return row
+
+    # Final fallback from history.
     row = {
         "best_epoch": best_epoch,
-        "train_macro_f1": get_macro(train_rep),
-        "calibration_macro_f1": get_macro(val_rep),
-        "train_weighted_f1": get_weighted(train_rep),
-        "calibration_weighted_f1": get_weighted(val_rep),
-        "train_accuracy": get_acc(train_rep),
-        "calibration_accuracy": get_acc(val_rep),
+        "train_macro_f1": float(best_hist_row.get("train_macro_f1", np.nan)),
+        "calibration_macro_f1": float(best_hist_row.get("val_macro_f1", np.nan)),
+        "train_weighted_f1": float(best_hist_row.get("train_weighted_f1", np.nan)),
+        "calibration_weighted_f1": float(best_hist_row.get("val_weighted_f1", np.nan)),
+        "train_accuracy": float(best_hist_row.get("train_accuracy", np.nan)),
+        "calibration_accuracy": float(best_hist_row.get("val_accuracy", np.nan)),
     }
     row["gap_train_minus_calibration_macro_f1"] = row["train_macro_f1"] - row["calibration_macro_f1"]
-    for cls in label_names:
-        # support both formats
-        if cls in val_rep:
-            d = val_rep[cls]
-            row[f"calib_f1_{cls}"] = float(d.get("f1", d.get("f1-score", np.nan)))
     return row
 
 
@@ -321,9 +371,42 @@ def main():
         else:
             cmd.append("--no-sam-adaptive")
 
-        subprocess.run(cmd, cwd=root, check=True)
+        # Official trainer writes runs under <out-root>/Keff512/<run-name>.
+        # Reuse if a previous crashed runner already completed the training run.
+        candidate_dirs = [
+            runs_root / "Keff512" / run_name,
+            runs_root / run_name,
+        ]
+        candidate_dirs += [p for p in runs_root.rglob(run_name) if p.is_dir()]
 
-        run_dir = runs_root / run_name
+        def _find_completed_run():
+            for cand in candidate_dirs:
+                if (cand / "history.csv").exists() and (
+                    (cand / "diagnosis_summary.json").exists()
+                    or (cand / "val_classification_report_best.json").exists()
+                    or (cand / "val_classification_report_best.csv").exists()
+                ):
+                    return cand
+            return None
+
+        run_dir = _find_completed_run()
+        if run_dir is not None:
+            log(f"Reusing completed run for rho={rho}: {run_dir}")
+        else:
+            subprocess.run(cmd, cwd=root, check=True)
+            candidate_dirs = [
+                runs_root / "Keff512" / run_name,
+                runs_root / run_name,
+            ]
+            candidate_dirs += [p for p in runs_root.rglob(run_name) if p.is_dir()]
+            run_dir = _find_completed_run()
+
+        if run_dir is None:
+            raise FileNotFoundError(
+                "Cannot locate completed run dir for "
+                f"{run_name}. Checked: {[str(x) for x in candidate_dirs[:10]]}"
+            )
+
         row = read_metrics(run_dir, label_names)
         row["rho"] = float(rho)
         row["sam_adaptive"] = bool(args.sam_adaptive)
