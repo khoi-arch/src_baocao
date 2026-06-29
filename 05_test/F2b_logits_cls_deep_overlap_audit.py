@@ -22,6 +22,7 @@ import importlib.util
 import json
 import math
 import os
+import sys
 import zipfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -92,6 +93,20 @@ def softmax_np(x: np.ndarray) -> np.ndarray:
 
 
 def import_module_from_path(path: Path, name: str = "official_trainer_module"):
+    """
+    Import official trainer by file path.
+
+    Official train scripts import sibling modules like:
+        import config as CFG
+
+    Therefore, add both repo root and 02_src folder to sys.path before importing.
+    """
+    path = Path(path).resolve()
+    repo_root = path.parents[1] if path.parent.name == "02_src" else Path.cwd().resolve()
+    for p in [str(path.parent), str(repo_root)]:
+        if p not in sys.path:
+            sys.path.insert(0, p)
+
     spec = importlib.util.spec_from_file_location(name, str(path))
     if spec is None or spec.loader is None:
         raise ImportError(f"Cannot import module from {path}")
