@@ -1,0 +1,143 @@
+{
+  "fix_count": 370,
+  "damage_count": 377,
+  "net_fix_minus_damage": -7,
+  "delta_macro_f1": -0.0011221407524896199,
+  "per_class_delta_acc": [
+    {
+      "true_label": "Benign",
+      "support": 4688,
+      "base_acc": 0.9995733788395904,
+      "gated_acc": 0.9995733788395904,
+      "fix": 0,
+      "damage": 0,
+      "gate_mean": 0.0002336062170797959,
+      "delta_acc": 0.0
+    },
+    {
+      "true_label": "Ransomware",
+      "support": 1566,
+      "base_acc": 0.7279693486590039,
+      "gated_acc": 0.6800766283524904,
+      "fix": 99,
+      "damage": 174,
+      "gate_mean": 0.23054413497447968,
+      "delta_acc": -0.04789272030651348
+    },
+    {
+      "true_label": "Spyware",
+      "support": 1604,
+      "base_acc": 0.7649625935162094,
+      "gated_acc": 0.773067331670823,
+      "fix": 120,
+      "damage": 107,
+      "gate_mean": 0.20592831075191498,
+      "delta_acc": 0.008104738154613544
+    },
+    {
+      "true_label": "Trojan",
+      "support": 1518,
+      "base_acc": 0.6225296442687747,
+      "gated_acc": 0.6587615283267457,
+      "fix": 151,
+      "damage": 96,
+      "gate_mean": 0.22720274329185486,
+      "delta_acc": 0.036231884057971064
+    }
+  ],
+  "gate_mean_by_switch": [
+    {
+      "switch_type": "both_correct",
+      "count": 7621,
+      "gate_mean": 0.06293024122714996,
+      "gate_median": 1.150955995399272e-05,
+      "gate_std": 0.13584759831428528,
+      "base_true_prob_mean": 0.9467695951461792,
+      "gated_true_prob_mean": 0.9508653879165649,
+      "delta_true_prob_mean": 0.004095756448805332
+    },
+    {
+      "switch_type": "both_wrong_same",
+      "count": 871,
+      "gate_mean": 0.29384860396385193,
+      "gate_median": 0.3329315781593323,
+      "gate_std": 0.18096676468849182,
+      "base_true_prob_mean": 0.18062709271907806,
+      "gated_true_prob_mean": 0.1740313172340393,
+      "delta_true_prob_mean": -0.006595781072974205
+    },
+    {
+      "switch_type": "damaged",
+      "count": 377,
+      "gate_mean": 0.35566064715385437,
+      "gate_median": 0.4021887183189392,
+      "gate_std": 0.16292165219783783,
+      "base_true_prob_mean": 0.7010312080383301,
+      "gated_true_prob_mean": 0.24824467301368713,
+      "delta_true_prob_mean": -0.45278650522232056
+    },
+    {
+      "switch_type": "fixed",
+      "count": 370,
+      "gate_mean": 0.31889981031417847,
+      "gate_median": 0.35985463857650757,
+      "gate_std": 0.17921124398708344,
+      "base_true_prob_mean": 0.2670670449733734,
+      "gated_true_prob_mean": 0.707888126373291,
+      "delta_true_prob_mean": 0.4408210515975952
+    },
+    {
+      "switch_type": "both_wrong_changed",
+      "count": 137,
+      "gate_mean": 0.3629164397716522,
+      "gate_median": 0.4323861598968506,
+      "gate_std": 0.16910915076732635,
+      "base_true_prob_mean": 0.15011556446552277,
+      "gated_true_prob_mean": 0.1512145847082138,
+      "delta_true_prob_mean": 0.001099028973840177
+    }
+  ],
+  "build_infos": {
+    "baseline": {
+      "continuous_info": {
+        "source": "raw_scaled",
+        "train_path": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/train_inner_raw.csv",
+        "val_path": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/calibration_raw.csv",
+        "scale": "train_only_minmax_linear_clip_val",
+        "n_constant_features": 3,
+        "constant_features": [
+          "pslist.nprocs64bit",
+          "handles.nport",
+          "svcscan.interactive_process_services"
+        ],
+        "train_min": 0.0,
+        "train_max": 1.0,
+        "val_min": 0.0,
+        "val_max": 1.0
+      },
+      "missing": [],
+      "unexpected": []
+    },
+    "gated": {
+      "continuous_info": {
+        "source": "raw_scaled",
+        "train_path": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/train_inner_raw.csv",
+        "val_path": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/calibration_raw.csv",
+        "scale": "train_only_minmax_linear_clip_val",
+        "n_constant_features": 3,
+        "constant_features": [
+          "pslist.nprocs64bit",
+          "handles.nport",
+          "svcscan.interactive_process_services"
+        ],
+        "train_min": 0.0,
+        "train_max": 1.0,
+        "val_min": 0.0,
+        "val_max": 1.0
+      },
+      "missing": [],
+      "unexpected": []
+    }
+  },
+  "interpretation_hint": "If gated gate is not much higher on fixed/hard samples than damaged/easy samples, the learned gate is not selective enough. If Ransomware margins vs Trojan/Spyware fall while Trojan vs Ransomware rises, boundary moved asymmetrically and overcorrected."
+}

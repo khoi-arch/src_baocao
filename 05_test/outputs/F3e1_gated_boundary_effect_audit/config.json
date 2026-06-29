@@ -1,0 +1,35 @@
+{
+  "experiment": "F3e1_gated_boundary_effect_audit",
+  "training_performed": false,
+  "official_validation_used": false,
+  "f3e0_dir": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration",
+  "trainer": "/kaggle/working/src_baocao/02_src/07_train_gated_hardneg.py",
+  "dataset_npz": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/dataset_train_inner_calibration.npz",
+  "train_raw": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/train_inner_raw.csv",
+  "calibration_raw": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/calibration_raw.csv",
+  "metrics": {
+    "baseline": {
+      "n": 9376,
+      "accuracy": 0.8530290102389079,
+      "macro_f1": 0.7786549144264168,
+      "weighted_f1": 0.8524508975820402
+    },
+    "gated": {
+      "n": 9376,
+      "accuracy": 0.8522824232081911,
+      "macro_f1": 0.7775327736739271,
+      "weighted_f1": 0.8519090103822188
+    },
+    "delta": {
+      "accuracy": -0.0007465870307167277,
+      "macro_f1": -0.0011221407524896199,
+      "weighted_f1": -0.0005418871998214003
+    }
+  },
+  "class_names": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ]
+}
