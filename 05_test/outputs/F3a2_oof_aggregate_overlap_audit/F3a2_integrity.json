@@ -1,0 +1,24 @@
+{
+  "n_rows": 46876,
+  "unique_original_row_id": 46876,
+  "duplicate_original_row_id_count": 0,
+  "expected_n": 46876,
+  "missing_original_row_id_count": 0,
+  "min_original_row_id": 0,
+  "max_original_row_id": 46875,
+  "folds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "fold_counts": {
+    "0": 9376,
+    "1": 9375,
+    "2": 9375,
+    "3": 9375,
+    "4": 9375
+  },
+  "pass": true
+}
