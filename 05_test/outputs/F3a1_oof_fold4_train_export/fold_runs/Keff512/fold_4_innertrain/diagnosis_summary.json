@@ -1,0 +1,450 @@
+{
+  "phase": "Final pipeline C2 D3",
+  "run_id": "D3",
+  "best_epoch": 35,
+  "representation": "D3_offset interpolation + raw FiLM/multiply fusion",
+  "local": "offset_interpolation",
+  "continuous_source": "raw_scaled",
+  "fusion": "raw_film",
+  "train": {
+    "loss": 0.3382084971493366,
+    "accuracy": 0.9019921568627451,
+    "macro_f1": 0.8517842186365541,
+    "weighted_f1": 0.9015367599871297,
+    "malware_only_avg_f1": 0.8023998725586144
+  },
+  "val": {
+    "loss": 0.597766187398238,
+    "accuracy": 0.8512264486313544,
+    "macro_f1": 0.7763186432706775,
+    "weighted_f1": 0.8507628574458855,
+    "malware_only_avg_f1": 0.7021725638447132
+  },
+  "generalization_gap_macro_f1": 0.07546557536587661,
+  "worst_val_classes_by_f1": [
+    {
+      "label": "Ransomware",
+      "f1": 0.6723404255319149,
+      "precision": 0.6723404255319149,
+      "recall": 0.6723404255319149,
+      "support": 940
+    },
+    {
+      "label": "Trojan",
+      "f1": 0.6821529745042493,
+      "precision": 0.7049180327868853,
+      "recall": 0.6608122941822173,
+      "support": 911
+    },
+    {
+      "label": "Spyware",
+      "f1": 0.7520242914979756,
+      "precision": 0.7327416173570019,
+      "recall": 0.7723492723492723,
+      "support": 962
+    },
+    {
+      "label": "Benign",
+      "f1": 0.9987568815485705,
+      "precision": 0.9978708303761533,
+      "recall": 0.9996445076430857,
+      "support": 2813
+    }
+  ],
+  "model_config": {
+    "value_dim": 32,
+    "feature_dim": 32,
+    "cell_dim": 64,
+    "num_bins": 512,
+    "effective_token_budget": 512,
+    "hidden_dim": 128,
+    "num_layers": 1,
+    "num_heads": 4,
+    "dropout": 0.1,
+    "classifier_hidden_dim": 128,
+    "classifier_dropout": 0.1,
+    "norm_first": true,
+    "use_class_weights": true,
+    "scheduler": "warmup_cosine",
+    "gate_init": 0.0
+  },
+  "continuous_info": {
+    "source": "raw_scaled",
+    "train_path": "05_test/outputs/F3a1_oof_fold4_train_export/_fold_artifacts/fold4_train_inner_val_train_raw.csv",
+    "val_path": "05_test/outputs/F3a1_oof_fold4_train_export/_fold_artifacts/fold4_train_inner_val_val_raw.csv",
+    "scale": "train_only_minmax_linear_clip_val",
+    "n_constant_features": 3,
+    "constant_features": [
+      "pslist.nprocs64bit",
+      "handles.nport",
+      "svcscan.interactive_process_services"
+    ],
+    "train_min": 0.0,
+    "train_max": 1.0,
+    "val_min": 0.0,
+    "val_max": 1.0
+  },
+  "selective_info": {
+    "type": "none"
+  },
+  "boundary_data_diagnostics": {
+    "train": {
+      "split": "train",
+      "num_bins": 512,
+      "last_bin_id": 511,
+      "n_rows": 31875,
+      "n_features": 55,
+      "total_cells": 1753125,
+      "last_bin_cells": 574,
+      "last_bin_cell_ratio": 0.00032741532976827097,
+      "features_with_last_bin": 28,
+      "max_feature_last_bin_ratio": 0.0037019607843137253,
+      "mean_feature_last_bin_ratio": 0.00032741532976827097,
+      "top_features_by_last_bin_ratio": [
+        {
+          "feature": "pslist.avg_threads",
+          "last_bin_count": 118,
+          "last_bin_ratio": 0.0037019607843137253,
+          "last_bin_offset_min": 0.0027887211181223392,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.6652275323867798,
+          "last_bin_offset_std": 0.2516214847564697
+        },
+        {
+          "feature": "handles.nfile",
+          "last_bin_count": 64,
+          "last_bin_ratio": 0.002007843137254902,
+          "last_bin_offset_min": 0.006313498131930828,
+          "last_bin_offset_max": 0.9885780811309814,
+          "last_bin_offset_mean": 0.47674381732940674,
+          "last_bin_offset_std": 0.30152007937431335
+        },
+        {
+          "feature": "handles.nevent",
+          "last_bin_count": 64,
+          "last_bin_ratio": 0.002007843137254902,
+          "last_bin_offset_min": 0.006461083423346281,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.4698082208633423,
+          "last_bin_offset_std": 0.2843109369277954
+        },
+        {
+          "feature": "dlllist.avg_dlls_per_proc",
+          "last_bin_count": 37,
+          "last_bin_ratio": 0.0011607843137254902,
+          "last_bin_offset_min": 0.001275414484553039,
+          "last_bin_offset_max": 0.9615874886512756,
+          "last_bin_offset_mean": 0.5286685228347778,
+          "last_bin_offset_std": 0.239411398768425
+        },
+        {
+          "feature": "handles.avg_handles_per_proc",
+          "last_bin_count": 36,
+          "last_bin_ratio": 0.0011294117647058823,
+          "last_bin_offset_min": 0.0018486774060875177,
+          "last_bin_offset_max": 0.982790470123291,
+          "last_bin_offset_mean": 0.53199702501297,
+          "last_bin_offset_std": 0.30092912912368774
+        },
+        {
+          "feature": "pslist.avg_handlers",
+          "last_bin_count": 35,
+          "last_bin_ratio": 0.0010980392156862745,
+          "last_bin_offset_min": 0.010397227481007576,
+          "last_bin_offset_max": 0.9829378724098206,
+          "last_bin_offset_mean": 0.5422477722167969,
+          "last_bin_offset_std": 0.29870155453681946
+        },
+        {
+          "feature": "malfind.uniqueInjections",
+          "last_bin_count": 26,
+          "last_bin_ratio": 0.0008156862745098039,
+          "last_bin_offset_min": 0.07975735515356064,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.6283636093139648,
+          "last_bin_offset_std": 0.23074030876159668
+        },
+        {
+          "feature": "ldrmodules.not_in_load_avg",
+          "last_bin_count": 21,
+          "last_bin_ratio": 0.0006588235294117648,
+          "last_bin_offset_min": 0.005374603439122438,
+          "last_bin_offset_max": 0.9336916208267212,
+          "last_bin_offset_mean": 0.4269063472747803,
+          "last_bin_offset_std": 0.2870585024356842
+        },
+        {
+          "feature": "ldrmodules.not_in_mem_avg",
+          "last_bin_count": 21,
+          "last_bin_ratio": 0.0006588235294117648,
+          "last_bin_offset_min": 0.005374603439122438,
+          "last_bin_offset_max": 0.9336916208267212,
+          "last_bin_offset_mean": 0.42848509550094604,
+          "last_bin_offset_std": 0.2857356369495392
+        },
+        {
+          "feature": "ldrmodules.not_in_init_avg",
+          "last_bin_count": 19,
+          "last_bin_ratio": 0.000596078431372549,
+          "last_bin_offset_min": 0.013867488130927086,
+          "last_bin_offset_max": 0.9342578053474426,
+          "last_bin_offset_mean": 0.48444294929504395,
+          "last_bin_offset_std": 0.2581787705421448
+        },
+        {
+          "feature": "psxview.not_in_session_false_avg",
+          "last_bin_count": 18,
+          "last_bin_ratio": 0.0005647058823529411,
+          "last_bin_offset_min": 0.14291693270206451,
+          "last_bin_offset_max": 0.9464322924613953,
+          "last_bin_offset_mean": 0.5982423424720764,
+          "last_bin_offset_std": 0.2159382700920105
+        },
+        {
+          "feature": "psxview.not_in_pslist_false_avg",
+          "last_bin_count": 17,
+          "last_bin_ratio": 0.0005333333333333334,
+          "last_bin_offset_min": 0.14447300136089325,
+          "last_bin_offset_max": 0.9341902136802673,
+          "last_bin_offset_mean": 0.5393316149711609,
+          "last_bin_offset_std": 0.23458097875118256
+        },
+        {
+          "feature": "psxview.not_in_pspcid_list_false_avg",
+          "last_bin_count": 17,
+          "last_bin_ratio": 0.0005333333333333334,
+          "last_bin_offset_min": 0.013107170350849628,
+          "last_bin_offset_max": 0.8684142827987671,
+          "last_bin_offset_mean": 0.3962538242340088,
+          "last_bin_offset_std": 0.24329784512519836
+        },
+        {
+          "feature": "psxview.not_in_csrss_handles_false_avg",
+          "last_bin_count": 17,
+          "last_bin_ratio": 0.0005333333333333334,
+          "last_bin_offset_min": 0.025483768433332443,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.4745255708694458,
+          "last_bin_offset_std": 0.2727704346179962
+        },
+        {
+          "feature": "psxview.not_in_deskthrd_false_avg",
+          "last_bin_count": 16,
+          "last_bin_ratio": 0.0005019607843137255,
+          "last_bin_offset_min": 0.045369796454906464,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.47627925872802734,
+          "last_bin_offset_std": 0.2780389189720154
+        }
+      ]
+    },
+    "val": {
+      "split": "val",
+      "num_bins": 512,
+      "last_bin_id": 511,
+      "n_rows": 5626,
+      "n_features": 55,
+      "total_cells": 309430,
+      "last_bin_cells": 100,
+      "last_bin_cell_ratio": 0.00032317486992211483,
+      "features_with_last_bin": 19,
+      "max_feature_last_bin_ratio": 0.0033771773906861,
+      "mean_feature_last_bin_ratio": 0.00032317486992211483,
+      "top_features_by_last_bin_ratio": [
+        {
+          "feature": "pslist.avg_threads",
+          "last_bin_count": 19,
+          "last_bin_ratio": 0.0033771773906861,
+          "last_bin_offset_min": 0.07078039646148682,
+          "last_bin_offset_max": 0.9320083260536194,
+          "last_bin_offset_mean": 0.6755485534667969,
+          "last_bin_offset_std": 0.23906776309013367
+        },
+        {
+          "feature": "handles.nfile",
+          "last_bin_count": 12,
+          "last_bin_ratio": 0.002132954141485958,
+          "last_bin_offset_min": 0.006313498131930828,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5022048354148865,
+          "last_bin_offset_std": 0.26551660895347595
+        },
+        {
+          "feature": "handles.nevent",
+          "last_bin_count": 12,
+          "last_bin_ratio": 0.002132954141485958,
+          "last_bin_offset_min": 0.041527848690748215,
+          "last_bin_offset_max": 0.9883118271827698,
+          "last_bin_offset_mean": 0.46621623635292053,
+          "last_bin_offset_std": 0.35563644766807556
+        },
+        {
+          "feature": "pslist.avg_handlers",
+          "last_bin_count": 8,
+          "last_bin_ratio": 0.0014219694276573053,
+          "last_bin_offset_min": 0.07864569127559662,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.45187950134277344,
+          "last_bin_offset_std": 0.29508551955223083
+        },
+        {
+          "feature": "handles.avg_handles_per_proc",
+          "last_bin_count": 8,
+          "last_bin_ratio": 0.0014219694276573053,
+          "last_bin_offset_min": 0.036267686635255814,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.4320862889289856,
+          "last_bin_offset_std": 0.31120193004608154
+        },
+        {
+          "feature": "malfind.uniqueInjections",
+          "last_bin_count": 8,
+          "last_bin_ratio": 0.0014219694276573053,
+          "last_bin_offset_min": 0.3098180294036865,
+          "last_bin_offset_max": 0.8849696516990662,
+          "last_bin_offset_mean": 0.5398787260055542,
+          "last_bin_offset_std": 0.16267745196819305
+        },
+        {
+          "feature": "dlllist.avg_dlls_per_proc",
+          "last_bin_count": 6,
+          "last_bin_ratio": 0.001066477070742979,
+          "last_bin_offset_min": 0.30857527256011963,
+          "last_bin_offset_max": 0.6927001476287842,
+          "last_bin_offset_mean": 0.5774626731872559,
+          "last_bin_offset_std": 0.12347887456417084
+        },
+        {
+          "feature": "ldrmodules.not_in_init_avg",
+          "last_bin_count": 5,
+          "last_bin_ratio": 0.0008887308922858159,
+          "last_bin_offset_min": 0.04673857241868973,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.6778634190559387,
+          "last_bin_offset_std": 0.3548859655857086
+        },
+        {
+          "feature": "ldrmodules.not_in_load_avg",
+          "last_bin_count": 4,
+          "last_bin_ratio": 0.0007109847138286527,
+          "last_bin_offset_min": 0.5358414649963379,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.834229052066803,
+          "last_bin_offset_std": 0.18309994041919708
+        },
+        {
+          "feature": "ldrmodules.not_in_mem_avg",
+          "last_bin_count": 4,
+          "last_bin_ratio": 0.0007109847138286527,
+          "last_bin_offset_min": 0.5358414649963379,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.834229052066803,
+          "last_bin_offset_std": 0.18309994041919708
+        },
+        {
+          "feature": "handles.nhandles",
+          "last_bin_count": 2,
+          "last_bin_ratio": 0.00035549235691432633,
+          "last_bin_offset_min": 0.07401224225759506,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.537006139755249,
+          "last_bin_offset_std": 0.46299389004707336
+        },
+        {
+          "feature": "psxview.not_in_pslist_false_avg",
+          "last_bin_count": 2,
+          "last_bin_ratio": 0.00035549235691432633,
+          "last_bin_offset_min": 0.07866323739290237,
+          "last_bin_offset_max": 0.4735218584537506,
+          "last_bin_offset_mean": 0.2760925590991974,
+          "last_bin_offset_std": 0.19742929935455322
+        },
+        {
+          "feature": "psxview.not_in_pspcid_list_false_avg",
+          "last_bin_count": 2,
+          "last_bin_ratio": 0.00035549235691432633,
+          "last_bin_offset_min": 0.2762785851955414,
+          "last_bin_offset_max": 0.9342071413993835,
+          "last_bin_offset_mean": 0.6052428483963013,
+          "last_bin_offset_std": 0.3289642632007599
+        },
+        {
+          "feature": "psxview.not_in_session_false_avg",
+          "last_bin_count": 2,
+          "last_bin_ratio": 0.00035549235691432633,
+          "last_bin_offset_min": 0.2500523030757904,
+          "last_bin_offset_max": 0.5714584589004517,
+          "last_bin_offset_mean": 0.4107553958892822,
+          "last_bin_offset_std": 0.16070307791233063
+        },
+        {
+          "feature": "psxview.not_in_deskthrd_false_avg",
+          "last_bin_count": 2,
+          "last_bin_ratio": 0.00035549235691432633,
+          "last_bin_offset_min": 0.5757198929786682,
+          "last_bin_offset_max": 0.8939299583435059,
+          "last_bin_offset_mean": 0.7348248958587646,
+          "last_bin_offset_std": 0.15910503268241882
+        }
+      ]
+    }
+  },
+  "embedding_runtime_diagnostics": {
+    "n_rows_checked": 2048,
+    "has_local_interp": true,
+    "embedding_class": "D3InterpRawFiLMEmbedding",
+    "offset_mean": 0.24171186983585358,
+    "offset_std": 0.3095649182796478,
+    "continuous_mean": 0.31412413716316223,
+    "continuous_std": 0.3490794003009796,
+    "continuous_mask_mean": 0.9999999403953552,
+    "bin_embedding_num_embeddings": 513,
+    "bin_embedding_dim": 32,
+    "bin_embedding_weight_std": 0.02021166682243347,
+    "local_abs_mean": 0.014443287625908852,
+    "local_std": 0.018298421055078506,
+    "local_l2_mean_per_cell": 0.10191230475902557,
+    "last_bin_offset_sensitivity_l2": 0.1304578334093094,
+    "last_bin_boundary_collapse_fixed": true,
+    "continuous_abs_mean_over_local_abs_mean": 21.748797455205136,
+    "film_gamma_abs_mean": 0.02537526562809944,
+    "film_beta_abs_mean": 0.023987509310245514,
+    "film_gate_mean": 0.4999999701976776,
+    "film_delta_l2_mean_per_cell": 0.08611716330051422,
+    "film_delta_over_local_l2_mean": 0.8450124202778124
+  },
+  "embedding_extra_summary": {
+    "cont_gate_min": 0.424760639667511,
+    "cont_gate_max": 0.5205792188644409,
+    "cont_gate_mean": 0.4801184833049774,
+    "cont_gate_std": 0.017563296481966972
+  },
+  "strategy_counts": {
+    "discrete_compact_offset0": 23,
+    "rank_uniform_offset": 15,
+    "keep_current": 14,
+    "constant": 3
+  },
+  "baseline_to_compare": {
+    "C0_mixed_bin_scalar_offset_no_continuous": {
+      "train_macro_f1": 0.9321426589148848,
+      "val_macro_f1": 0.8133554660345561,
+      "gap": 0.11878719288032868
+    },
+    "C2_scalar_offset_raw_scalar_concat": {
+      "train_macro_f1": 0.9265573540092596,
+      "val_macro_f1": 0.809009713024029,
+      "gap": 0.11754764098523063
+    },
+    "C3_scalar_offset_z_project_gate_add": {
+      "train_macro_f1": 0.890405910135817,
+      "val_macro_f1": 0.8087819336025909,
+      "gap": 0.08162397653322617
+    },
+    "C4_scalar_offset_raw_project_gate_add": {
+      "train_macro_f1": 0.9110189147125328,
+      "val_macro_f1": 0.807190454742599,
+      "gap": 0.10382845996993384
+    }
+  }
+}

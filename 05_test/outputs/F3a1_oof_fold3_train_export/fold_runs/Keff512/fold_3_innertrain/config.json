@@ -1,0 +1,460 @@
+{
+  "stage": "train_official_d3_final_pipeline",
+  "phase": "C2_D3_final_pipeline_reproduction",
+  "run_id": "D3",
+  "run_spec": {
+    "local": "offset_interpolation",
+    "continuous_source": "raw_scaled",
+    "fusion": "raw_film",
+    "description": "offset interpolation + raw FiLM/multiply fusion"
+  },
+  "K_artifact": 512,
+  "effective_token_budget": 512,
+  "num_bins": 512,
+  "dataset_npz": "/kaggle/working/src_baocao/05_test/outputs/F3a1_oof_fold3_train_export/_fold_artifacts/fold3_train_inner_val_dataset.npz",
+  "metadata_json": "/kaggle/working/src_baocao/03_outputs/05_dataset/metadata.json",
+  "out_dir": "/kaggle/working/src_baocao/05_test/outputs/F3a1_oof_fold3_train_export/fold_runs/Keff512/fold_3_innertrain",
+  "continuous_info": {
+    "source": "raw_scaled",
+    "train_path": "05_test/outputs/F3a1_oof_fold3_train_export/_fold_artifacts/fold3_train_inner_val_train_raw.csv",
+    "val_path": "05_test/outputs/F3a1_oof_fold3_train_export/_fold_artifacts/fold3_train_inner_val_val_raw.csv",
+    "scale": "train_only_minmax_linear_clip_val",
+    "n_constant_features": 3,
+    "constant_features": [
+      "pslist.nprocs64bit",
+      "handles.nport",
+      "svcscan.interactive_process_services"
+    ],
+    "train_min": 0.0,
+    "train_max": 1.0,
+    "val_min": 0.0,
+    "val_max": 1.0
+  },
+  "selective_info": {
+    "type": "none"
+  },
+  "seed": 42,
+  "device": "cuda",
+  "epochs": 80,
+  "diagnostic_only": false,
+  "batch_size": 512,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "scheduler": "warmup_cosine",
+  "warmup_epochs": 8,
+  "min_lr_ratio": 0.05,
+  "patience": 12,
+  "min_delta": 0.0001,
+  "grad_clip_norm": 1.0,
+  "use_class_weights": true,
+  "soft_targets": {
+    "enabled": false,
+    "reason": "no --soft-target-matrix provided"
+  },
+  "n_features": 55,
+  "num_classes": 4,
+  "label_names": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "representation": {
+    "local": "offset_interpolation",
+    "continuous_source": "raw_scaled",
+    "fusion": "raw_film",
+    "description": "offset interpolation + raw FiLM/multiply fusion",
+    "strategy_counts": {
+      "discrete_compact_offset0": 23,
+      "rank_uniform_offset": 15,
+      "keep_current": 14,
+      "constant": 3
+    }
+  },
+  "model": {
+    "value_dim": 32,
+    "feature_dim": 32,
+    "cell_dim": 64,
+    "hidden_dim": 128,
+    "num_layers": 1,
+    "num_heads": 4,
+    "dropout": 0.1,
+    "classifier_hidden_dim": 128,
+    "classifier_dropout": 0.1,
+    "norm_first": true,
+    "gate_init": 0.0
+  },
+  "boundary_data_diagnostics": {
+    "train": {
+      "split": "train",
+      "num_bins": 512,
+      "last_bin_id": 511,
+      "n_rows": 31875,
+      "n_features": 55,
+      "total_cells": 1753125,
+      "last_bin_cells": 596,
+      "last_bin_cell_ratio": 0.0003399643493761141,
+      "features_with_last_bin": 29,
+      "max_feature_last_bin_ratio": 0.0037019607843137253,
+      "mean_feature_last_bin_ratio": 0.0003399643493761141,
+      "top_features_by_last_bin_ratio": [
+        {
+          "feature": "pslist.avg_threads",
+          "last_bin_count": 118,
+          "last_bin_ratio": 0.0037019607843137253,
+          "last_bin_offset_min": 0.0027887211181223392,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.6592735052108765,
+          "last_bin_offset_std": 0.24088311195373535
+        },
+        {
+          "feature": "handles.nfile",
+          "last_bin_count": 67,
+          "last_bin_ratio": 0.0021019607843137255,
+          "last_bin_offset_min": 0.006313498131930828,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.47460225224494934,
+          "last_bin_offset_std": 0.3025050163269043
+        },
+        {
+          "feature": "handles.nevent",
+          "last_bin_count": 59,
+          "last_bin_ratio": 0.0018509803921568627,
+          "last_bin_offset_min": 0.006461083423346281,
+          "last_bin_offset_max": 0.9766217470169067,
+          "last_bin_offset_mean": 0.4821314811706543,
+          "last_bin_offset_std": 0.29203298687934875
+        },
+        {
+          "feature": "pslist.avg_handlers",
+          "last_bin_count": 41,
+          "last_bin_ratio": 0.0012862745098039215,
+          "last_bin_offset_min": 0.010397227481007576,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5239253044128418,
+          "last_bin_offset_std": 0.28194528818130493
+        },
+        {
+          "feature": "handles.avg_handles_per_proc",
+          "last_bin_count": 41,
+          "last_bin_ratio": 0.0012862745098039215,
+          "last_bin_offset_min": 0.0018486774060875177,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5156153440475464,
+          "last_bin_offset_std": 0.2875825762748718
+        },
+        {
+          "feature": "dlllist.avg_dlls_per_proc",
+          "last_bin_count": 34,
+          "last_bin_ratio": 0.0010666666666666667,
+          "last_bin_offset_min": 0.001275414484553039,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5469586253166199,
+          "last_bin_offset_std": 0.23527902364730835
+        },
+        {
+          "feature": "malfind.uniqueInjections",
+          "last_bin_count": 34,
+          "last_bin_ratio": 0.0010666666666666667,
+          "last_bin_offset_min": 0.07975735515356064,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.6041603684425354,
+          "last_bin_offset_std": 0.2217768132686615
+        },
+        {
+          "feature": "ldrmodules.not_in_load_avg",
+          "last_bin_count": 24,
+          "last_bin_ratio": 0.0007529411764705883,
+          "last_bin_offset_min": 0.005374603439122438,
+          "last_bin_offset_max": 0.9668458104133606,
+          "last_bin_offset_mean": 0.47920310497283936,
+          "last_bin_offset_std": 0.29876789450645447
+        },
+        {
+          "feature": "ldrmodules.not_in_mem_avg",
+          "last_bin_count": 24,
+          "last_bin_ratio": 0.0007529411764705883,
+          "last_bin_offset_min": 0.005374603439122438,
+          "last_bin_offset_max": 0.9668458104133606,
+          "last_bin_offset_mean": 0.48196592926979065,
+          "last_bin_offset_std": 0.2962019443511963
+        },
+        {
+          "feature": "ldrmodules.not_in_init_avg",
+          "last_bin_count": 23,
+          "last_bin_ratio": 0.0007215686274509804,
+          "last_bin_offset_min": 0.013867488130927086,
+          "last_bin_offset_max": 0.9671289324760437,
+          "last_bin_offset_mean": 0.5055045485496521,
+          "last_bin_offset_std": 0.287133127450943
+        },
+        {
+          "feature": "psxview.not_in_session_false_avg",
+          "last_bin_count": 19,
+          "last_bin_ratio": 0.000596078431372549,
+          "last_bin_offset_min": 0.03578154370188713,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5178907513618469,
+          "last_bin_offset_std": 0.28557687997817993
+        },
+        {
+          "feature": "psxview.not_in_deskthrd_false_avg",
+          "last_bin_count": 17,
+          "last_bin_ratio": 0.0005333333333333334,
+          "last_bin_offset_min": 0.09840480983257294,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5195651650428772,
+          "last_bin_offset_std": 0.2594800889492035
+        },
+        {
+          "feature": "psxview.not_in_pslist_false_avg",
+          "last_bin_count": 16,
+          "last_bin_ratio": 0.0005019607843137255,
+          "last_bin_offset_min": 0.07866323739290237,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5064266920089722,
+          "last_bin_offset_std": 0.28967514634132385
+        },
+        {
+          "feature": "psxview.not_in_ethread_pool_false_avg",
+          "last_bin_count": 16,
+          "last_bin_ratio": 0.0005019607843137255,
+          "last_bin_offset_min": 0.01833433285355568,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.4708208739757538,
+          "last_bin_offset_std": 0.2868550419807434
+        },
+        {
+          "feature": "psxview.not_in_pspcid_list_false_avg",
+          "last_bin_count": 16,
+          "last_bin_ratio": 0.0005019607843137255,
+          "last_bin_offset_min": 0.07890002429485321,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5024415254592896,
+          "last_bin_offset_std": 0.2987683415412903
+        }
+      ]
+    },
+    "val": {
+      "split": "val",
+      "num_bins": 512,
+      "last_bin_id": 511,
+      "n_rows": 5626,
+      "n_features": 55,
+      "total_cells": 309430,
+      "last_bin_cells": 97,
+      "last_bin_cell_ratio": 0.00031347962382445143,
+      "features_with_last_bin": 17,
+      "max_feature_last_bin_ratio": 0.0035549235691432635,
+      "mean_feature_last_bin_ratio": 0.00031347962382445143,
+      "top_features_by_last_bin_ratio": [
+        {
+          "feature": "pslist.avg_threads",
+          "last_bin_count": 20,
+          "last_bin_ratio": 0.0035549235691432635,
+          "last_bin_offset_min": 0.04811650514602661,
+          "last_bin_offset_max": 0.9093444347381592,
+          "last_bin_offset_mean": 0.698570191860199,
+          "last_bin_offset_std": 0.23488584160804749
+        },
+        {
+          "feature": "handles.nevent",
+          "last_bin_count": 12,
+          "last_bin_ratio": 0.002132954141485958,
+          "last_bin_offset_min": 0.02983853779733181,
+          "last_bin_offset_max": 0.8948012590408325,
+          "last_bin_offset_mean": 0.4759567975997925,
+          "last_bin_offset_std": 0.29372677206993103
+        },
+        {
+          "feature": "handles.nfile",
+          "last_bin_count": 10,
+          "last_bin_ratio": 0.0017774617845716318,
+          "last_bin_offset_min": 0.006313498131930828,
+          "last_bin_offset_max": 0.8857827186584473,
+          "last_bin_offset_mean": 0.4688914716243744,
+          "last_bin_offset_std": 0.2723180055618286
+        },
+        {
+          "feature": "pslist.avg_handlers",
+          "last_bin_count": 9,
+          "last_bin_ratio": 0.0015997156061144685,
+          "last_bin_offset_min": 0.027459343895316124,
+          "last_bin_offset_max": 0.8123167157173157,
+          "last_bin_offset_mean": 0.3971385359764099,
+          "last_bin_offset_std": 0.2435629963874817
+        },
+        {
+          "feature": "handles.avg_handles_per_proc",
+          "last_bin_count": 9,
+          "last_bin_ratio": 0.0015997156061144685,
+          "last_bin_offset_min": 0.13952472805976868,
+          "last_bin_offset_max": 0.8106954097747803,
+          "last_bin_offset_mean": 0.42443764209747314,
+          "last_bin_offset_std": 0.22085325419902802
+        },
+        {
+          "feature": "dlllist.avg_dlls_per_proc",
+          "last_bin_count": 8,
+          "last_bin_ratio": 0.0014219694276573053,
+          "last_bin_offset_min": 0.27016279101371765,
+          "last_bin_offset_max": 0.8847625255584717,
+          "last_bin_offset_mean": 0.6254783272743225,
+          "last_bin_offset_std": 0.16381697356700897
+        },
+        {
+          "feature": "psxview.not_in_pslist_false_avg",
+          "last_bin_count": 6,
+          "last_bin_ratio": 0.001066477070742979,
+          "last_bin_offset_min": 0.012853470630943775,
+          "last_bin_offset_max": 0.8025707006454468,
+          "last_bin_offset_mean": 0.28706082701683044,
+          "last_bin_offset_std": 0.2588610351085663
+        },
+        {
+          "feature": "psxview.not_in_session_false_avg",
+          "last_bin_count": 6,
+          "last_bin_ratio": 0.001066477070742979,
+          "last_bin_offset_min": 0.19648462533950806,
+          "last_bin_offset_max": 0.8392969369888306,
+          "last_bin_offset_mean": 0.4196833372116089,
+          "last_bin_offset_std": 0.2107071429491043
+        },
+        {
+          "feature": "ldrmodules.not_in_init_avg",
+          "last_bin_count": 3,
+          "last_bin_ratio": 0.0005332385353714896,
+          "last_bin_offset_min": 0.1782229095697403,
+          "last_bin_offset_max": 0.7041602730751038,
+          "last_bin_offset_mean": 0.36449238657951355,
+          "last_bin_offset_std": 0.24055606126785278
+        },
+        {
+          "feature": "malfind.uniqueInjections",
+          "last_bin_count": 3,
+          "last_bin_ratio": 0.0005332385353714896,
+          "last_bin_offset_min": 0.7699393630027771,
+          "last_bin_offset_max": 0.8849696516990662,
+          "last_bin_offset_mean": 0.8466262221336365,
+          "last_bin_offset_std": 0.054225798696279526
+        },
+        {
+          "feature": "psxview.not_in_pspcid_list_false_avg",
+          "last_bin_count": 3,
+          "last_bin_ratio": 0.0005332385353714896,
+          "last_bin_offset_min": 0.013107170350849628,
+          "last_bin_offset_max": 0.6052428483963013,
+          "last_bin_offset_mean": 0.2762785851955414,
+          "last_bin_offset_std": 0.24617430567741394
+        },
+        {
+          "feature": "ldrmodules.not_in_load_avg",
+          "last_bin_count": 2,
+          "last_bin_ratio": 0.00035549235691432633,
+          "last_bin_offset_min": 0.07168295979499817,
+          "last_bin_offset_max": 0.767920732498169,
+          "last_bin_offset_mean": 0.41980183124542236,
+          "last_bin_offset_std": 0.3481189012527466
+        },
+        {
+          "feature": "ldrmodules.not_in_mem_avg",
+          "last_bin_count": 2,
+          "last_bin_ratio": 0.00035549235691432633,
+          "last_bin_offset_min": 0.07168295979499817,
+          "last_bin_offset_max": 0.767920732498169,
+          "last_bin_offset_mean": 0.41980183124542236,
+          "last_bin_offset_std": 0.3481189012527466
+        },
+        {
+          "feature": "dlllist.ndlls",
+          "last_bin_count": 1,
+          "last_bin_ratio": 0.00017774617845716317,
+          "last_bin_offset_min": 1.0,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 1.0,
+          "last_bin_offset_std": 0.0
+        },
+        {
+          "feature": "handles.nhandles",
+          "last_bin_count": 1,
+          "last_bin_ratio": 0.00017774617845716317,
+          "last_bin_offset_min": 0.28770172595977783,
+          "last_bin_offset_max": 0.28770172595977783,
+          "last_bin_offset_mean": 0.28770172595977783,
+          "last_bin_offset_std": 0.0
+        }
+      ]
+    }
+  },
+  "data_shapes": {
+    "X_train_bin": [
+      31875,
+      55
+    ],
+    "X_train_offset": [
+      31875,
+      55
+    ],
+    "X_train_continuous": [
+      31875,
+      55
+    ],
+    "X_train_mask": [
+      31875,
+      55
+    ],
+    "y_train": [
+      31875
+    ],
+    "X_val_bin": [
+      5626,
+      55
+    ],
+    "X_val_offset": [
+      5626,
+      55
+    ],
+    "X_val_continuous": [
+      5626,
+      55
+    ],
+    "X_val_mask": [
+      5626,
+      55
+    ],
+    "y_val": [
+      5626
+    ]
+  },
+  "torch_version": "2.10.0+cu128",
+  "embedding_runtime_diagnostics": {
+    "n_rows_checked": 2048,
+    "has_local_interp": true,
+    "embedding_class": "D3InterpRawFiLMEmbedding",
+    "offset_mean": 0.2411200851202011,
+    "offset_std": 0.3085959255695343,
+    "continuous_mean": 0.3133755028247833,
+    "continuous_std": 0.3499896228313446,
+    "continuous_mask_mean": 0.9999999403953552,
+    "bin_embedding_num_embeddings": 513,
+    "bin_embedding_dim": 32,
+    "bin_embedding_weight_std": 0.02021166682243347,
+    "local_abs_mean": 0.014437109231948853,
+    "local_std": 0.01829199120402336,
+    "local_l2_mean_per_cell": 0.1018730103969574,
+    "last_bin_offset_sensitivity_l2": 0.1304578334093094,
+    "last_bin_boundary_collapse_fixed": true,
+    "continuous_abs_mean_over_local_abs_mean": 21.706250038705363,
+    "film_gamma_abs_mean": 0.025311768054962158,
+    "film_beta_abs_mean": 0.02392643131315708,
+    "film_gate_mean": 0.4999999701976776,
+    "film_delta_l2_mean_per_cell": 0.08588813990354538,
+    "film_delta_over_local_l2_mean": 0.8430902313465998
+  },
+  "sam": {
+    "sam_rho": 0.0,
+    "sam_adaptive": false,
+    "sam_eps": 1e-12,
+    "enabled": false
+  }
+}
