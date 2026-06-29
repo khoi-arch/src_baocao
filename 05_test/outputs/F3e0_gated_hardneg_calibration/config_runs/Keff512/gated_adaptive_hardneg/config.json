@@ -1,0 +1,473 @@
+{
+  "stage": "train_official_d3_final_pipeline",
+  "phase": "C2_D3_final_pipeline_reproduction",
+  "run_id": "D3",
+  "run_spec": {
+    "local": "offset_interpolation",
+    "continuous_source": "raw_scaled",
+    "fusion": "raw_film",
+    "description": "offset interpolation + raw FiLM/multiply fusion"
+  },
+  "K_artifact": 512,
+  "effective_token_budget": 512,
+  "num_bins": 512,
+  "dataset_npz": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/dataset_train_inner_calibration.npz",
+  "metadata_json": "/kaggle/working/src_baocao/03_outputs/05_dataset/metadata.json",
+  "out_dir": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/config_runs/Keff512/gated_adaptive_hardneg",
+  "continuous_info": {
+    "source": "raw_scaled",
+    "train_path": "05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/train_inner_raw.csv",
+    "val_path": "05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/calibration_raw.csv",
+    "scale": "train_only_minmax_linear_clip_val",
+    "n_constant_features": 3,
+    "constant_features": [
+      "pslist.nprocs64bit",
+      "handles.nport",
+      "svcscan.interactive_process_services"
+    ],
+    "train_min": 0.0,
+    "train_max": 1.0,
+    "val_min": 0.0,
+    "val_max": 1.0
+  },
+  "selective_info": {
+    "type": "none"
+  },
+  "seed": 42,
+  "device": "cuda",
+  "epochs": 80,
+  "diagnostic_only": false,
+  "batch_size": 512,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "scheduler": "warmup_cosine",
+  "warmup_epochs": 8,
+  "min_lr_ratio": 0.05,
+  "patience": 12,
+  "min_delta": 0.0001,
+  "grad_clip_norm": 1.0,
+  "use_class_weights": true,
+  "soft_targets": {
+    "enabled": false,
+    "reason": "no --soft-target-matrix provided"
+  },
+  "n_features": 55,
+  "num_classes": 4,
+  "label_names": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "representation": {
+    "local": "offset_interpolation",
+    "continuous_source": "raw_scaled",
+    "fusion": "raw_film",
+    "description": "offset interpolation + raw FiLM/multiply fusion",
+    "strategy_counts": {
+      "discrete_compact_offset0": 23,
+      "rank_uniform_offset": 15,
+      "keep_current": 14,
+      "constant": 3
+    }
+  },
+  "model": {
+    "value_dim": 32,
+    "feature_dim": 32,
+    "cell_dim": 64,
+    "hidden_dim": 128,
+    "num_layers": 1,
+    "num_heads": 4,
+    "dropout": 0.1,
+    "classifier_hidden_dim": 128,
+    "classifier_dropout": 0.1,
+    "norm_first": true,
+    "gate_init": 0.0
+  },
+  "boundary_data_diagnostics": {
+    "train": {
+      "split": "train",
+      "num_bins": 512,
+      "last_bin_id": 511,
+      "n_rows": 37500,
+      "n_features": 55,
+      "total_cells": 2062500,
+      "last_bin_cells": 674,
+      "last_bin_cell_ratio": 0.00032678787878787877,
+      "features_with_last_bin": 29,
+      "max_feature_last_bin_ratio": 0.0035733333333333333,
+      "mean_feature_last_bin_ratio": 0.0003267878787878788,
+      "top_features_by_last_bin_ratio": [
+        {
+          "feature": "pslist.avg_threads",
+          "last_bin_count": 134,
+          "last_bin_ratio": 0.0035733333333333333,
+          "last_bin_offset_min": 0.04811650514602661,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.6615638136863708,
+          "last_bin_offset_std": 0.2495056688785553
+        },
+        {
+          "feature": "handles.nevent",
+          "last_bin_count": 75,
+          "last_bin_ratio": 0.002,
+          "last_bin_offset_min": 0.006461083423346281,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.485853374004364,
+          "last_bin_offset_std": 0.2916681468486786
+        },
+        {
+          "feature": "handles.nfile",
+          "last_bin_count": 72,
+          "last_bin_ratio": 0.00192,
+          "last_bin_offset_min": 0.006313498131930828,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5229857563972473,
+          "last_bin_offset_std": 0.2888197600841522
+        },
+        {
+          "feature": "pslist.avg_handlers",
+          "last_bin_count": 50,
+          "last_bin_ratio": 0.0013333333333333333,
+          "last_bin_offset_min": 0.010397227481007576,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5215782523155212,
+          "last_bin_offset_std": 0.2842767834663391
+        },
+        {
+          "feature": "handles.avg_handles_per_proc",
+          "last_bin_count": 50,
+          "last_bin_ratio": 0.0013333333333333333,
+          "last_bin_offset_min": 0.036267686635255814,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5201990008354187,
+          "last_bin_offset_std": 0.28243812918663025
+        },
+        {
+          "feature": "dlllist.avg_dlls_per_proc",
+          "last_bin_count": 40,
+          "last_bin_ratio": 0.0010666666666666667,
+          "last_bin_offset_min": 0.001275414484553039,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5438517332077026,
+          "last_bin_offset_std": 0.23572680354118347
+        },
+        {
+          "feature": "malfind.uniqueInjections",
+          "last_bin_count": 32,
+          "last_bin_ratio": 0.0008533333333333333,
+          "last_bin_offset_min": 0.07975735515356064,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.622556746006012,
+          "last_bin_offset_std": 0.23048153519630432
+        },
+        {
+          "feature": "psxview.not_in_session_false_avg",
+          "last_bin_count": 25,
+          "last_bin_ratio": 0.0006666666666666666,
+          "last_bin_offset_min": 0.03578154370188713,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.5350324511528015,
+          "last_bin_offset_std": 0.2614279091358185
+        },
+        {
+          "feature": "ldrmodules.not_in_load_avg",
+          "last_bin_count": 23,
+          "last_bin_ratio": 0.0006133333333333334,
+          "last_bin_offset_min": 0.005374603439122438,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.4320545196533203,
+          "last_bin_offset_std": 0.288585364818573
+        },
+        {
+          "feature": "ldrmodules.not_in_mem_avg",
+          "last_bin_count": 23,
+          "last_bin_ratio": 0.0006133333333333334,
+          "last_bin_offset_min": 0.005374603439122438,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.43637898564338684,
+          "last_bin_offset_std": 0.2853705585002899
+        },
+        {
+          "feature": "psxview.not_in_pslist_false_avg",
+          "last_bin_count": 23,
+          "last_bin_ratio": 0.0006133333333333334,
+          "last_bin_offset_min": 0.012853470630943775,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.47638317942619324,
+          "last_bin_offset_std": 0.2888065278530121
+        },
+        {
+          "feature": "ldrmodules.not_in_init_avg",
+          "last_bin_count": 22,
+          "last_bin_ratio": 0.0005866666666666667,
+          "last_bin_offset_min": 0.013867488130927086,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.45463883876800537,
+          "last_bin_offset_std": 0.2710001468658447
+        },
+        {
+          "feature": "psxview.not_in_pspcid_list_false_avg",
+          "last_bin_count": 20,
+          "last_bin_ratio": 0.0005333333333333334,
+          "last_bin_offset_min": 0.013107170350849628,
+          "last_bin_offset_max": 0.9342071413993835,
+          "last_bin_offset_mean": 0.43747109174728394,
+          "last_bin_offset_std": 0.2684437036514282
+        },
+        {
+          "feature": "psxview.not_in_csrss_handles_false_avg",
+          "last_bin_count": 16,
+          "last_bin_ratio": 0.00042666666666666667,
+          "last_bin_offset_min": 0.025483768433332443,
+          "last_bin_offset_max": 0.9458602070808411,
+          "last_bin_offset_mean": 0.4450671076774597,
+          "last_bin_offset_std": 0.2842338979244232
+        },
+        {
+          "feature": "psxview.not_in_deskthrd_false_avg",
+          "last_bin_count": 15,
+          "last_bin_ratio": 0.0004,
+          "last_bin_offset_min": 0.045369796454906464,
+          "last_bin_offset_max": 0.9469649791717529,
+          "last_bin_offset_mean": 0.45904290676116943,
+          "last_bin_offset_std": 0.28606149554252625
+        }
+      ]
+    },
+    "val": {
+      "split": "val",
+      "num_bins": 512,
+      "last_bin_id": 511,
+      "n_rows": 9376,
+      "n_features": 55,
+      "total_cells": 515680,
+      "last_bin_cells": 166,
+      "last_bin_cell_ratio": 0.0003219050573999379,
+      "features_with_last_bin": 18,
+      "max_feature_last_bin_ratio": 0.004372866894197952,
+      "mean_feature_last_bin_ratio": 0.0003219050573999379,
+      "top_features_by_last_bin_ratio": [
+        {
+          "feature": "pslist.avg_threads",
+          "last_bin_count": 41,
+          "last_bin_ratio": 0.004372866894197952,
+          "last_bin_offset_min": 0.0027887211181223392,
+          "last_bin_offset_max": 0.9093444347381592,
+          "last_bin_offset_mean": 0.6401416063308716,
+          "last_bin_offset_std": 0.27477118372917175
+        },
+        {
+          "feature": "handles.nfile",
+          "last_bin_count": 20,
+          "last_bin_ratio": 0.0021331058020477816,
+          "last_bin_offset_min": 0.006313498131930828,
+          "last_bin_offset_max": 0.9086265563964844,
+          "last_bin_offset_mean": 0.36666733026504517,
+          "last_bin_offset_std": 0.2884620428085327
+        },
+        {
+          "feature": "handles.nevent",
+          "last_bin_count": 17,
+          "last_bin_ratio": 0.0018131399317406144,
+          "last_bin_offset_min": 0.041527848690748215,
+          "last_bin_offset_max": 0.9415573477745056,
+          "last_bin_offset_mean": 0.4801967740058899,
+          "last_bin_offset_std": 0.28309881687164307
+        },
+        {
+          "feature": "ldrmodules.not_in_load_avg",
+          "last_bin_count": 10,
+          "last_bin_ratio": 0.0010665529010238908,
+          "last_bin_offset_min": 0.2042996883392334,
+          "last_bin_offset_max": 0.9668458104133606,
+          "last_bin_offset_mean": 0.6419349312782288,
+          "last_bin_offset_std": 0.28628015518188477
+        },
+        {
+          "feature": "ldrmodules.not_in_init_avg",
+          "last_bin_count": 10,
+          "last_bin_ratio": 0.0010665529010238908,
+          "last_bin_offset_min": 0.11248073726892471,
+          "last_bin_offset_max": 0.9671289324760437,
+          "last_bin_offset_mean": 0.6417051553726196,
+          "last_bin_offset_std": 0.2934377193450928
+        },
+        {
+          "feature": "ldrmodules.not_in_mem_avg",
+          "last_bin_count": 10,
+          "last_bin_ratio": 0.0010665529010238908,
+          "last_bin_offset_min": 0.171145498752594,
+          "last_bin_offset_max": 0.9668458104133606,
+          "last_bin_offset_mean": 0.6319886445999146,
+          "last_bin_offset_std": 0.3003885746002197
+        },
+        {
+          "feature": "pslist.avg_handlers",
+          "last_bin_count": 9,
+          "last_bin_ratio": 0.0009598976109215017,
+          "last_bin_offset_min": 0.04452146217226982,
+          "last_bin_offset_max": 0.8976272940635681,
+          "last_bin_offset_mean": 0.41420066356658936,
+          "last_bin_offset_std": 0.3077493906021118
+        },
+        {
+          "feature": "handles.avg_handles_per_proc",
+          "last_bin_count": 9,
+          "last_bin_ratio": 0.0009598976109215017,
+          "last_bin_offset_min": 0.0018486774060875177,
+          "last_bin_offset_max": 0.8967429399490356,
+          "last_bin_offset_mean": 0.3938429653644562,
+          "last_bin_offset_std": 0.3261016011238098
+        },
+        {
+          "feature": "dlllist.avg_dlls_per_proc",
+          "last_bin_count": 8,
+          "last_bin_ratio": 0.0008532423208191126,
+          "last_bin_offset_min": 0.11651286482810974,
+          "last_bin_offset_max": 0.923175036907196,
+          "last_bin_offset_mean": 0.5870658159255981,
+          "last_bin_offset_std": 0.20574000477790833
+        },
+        {
+          "feature": "malfind.uniqueInjections",
+          "last_bin_count": 7,
+          "last_bin_ratio": 0.0007465870307167236,
+          "last_bin_offset_min": 0.424848347902298,
+          "last_bin_offset_max": 0.8849696516990662,
+          "last_bin_offset_mean": 0.6056103110313416,
+          "last_bin_offset_std": 0.14880627393722534
+        },
+        {
+          "feature": "psxview.not_in_deskthrd_false_avg",
+          "last_bin_count": 6,
+          "last_bin_ratio": 0.0006399317406143345,
+          "last_bin_offset_min": 0.3635798692703247,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.6464332342147827,
+          "last_bin_offset_std": 0.2023378163576126
+        },
+        {
+          "feature": "psxview.not_in_ethread_pool_false_avg",
+          "last_bin_count": 5,
+          "last_bin_ratio": 0.0005332764505119454,
+          "last_bin_offset_min": 0.38645896315574646,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.644146203994751,
+          "last_bin_offset_std": 0.2139490693807602
+        },
+        {
+          "feature": "psxview.not_in_csrss_handles_false_avg",
+          "last_bin_count": 5,
+          "last_bin_ratio": 0.0005332764505119454,
+          "last_bin_offset_min": 0.45860210061073303,
+          "last_bin_offset_max": 1.0,
+          "last_bin_offset_mean": 0.685989260673523,
+          "last_bin_offset_std": 0.188791885972023
+        },
+        {
+          "feature": "handles.nsemaphore",
+          "last_bin_count": 4,
+          "last_bin_ratio": 0.0004266211604095563,
+          "last_bin_offset_min": 0.17816320061683655,
+          "last_bin_offset_max": 0.17816320061683655,
+          "last_bin_offset_mean": 0.17816320061683655,
+          "last_bin_offset_std": 0.0
+        },
+        {
+          "feature": "psxview.not_in_session_false_avg",
+          "last_bin_count": 2,
+          "last_bin_ratio": 0.00021331058020477816,
+          "last_bin_offset_min": 0.08934923261404037,
+          "last_bin_offset_max": 0.30362001061439514,
+          "last_bin_offset_mean": 0.19648462533950806,
+          "last_bin_offset_std": 0.10713539272546768
+        }
+      ]
+    }
+  },
+  "data_shapes": {
+    "X_train_bin": [
+      37500,
+      55
+    ],
+    "X_train_offset": [
+      37500,
+      55
+    ],
+    "X_train_continuous": [
+      37500,
+      55
+    ],
+    "X_train_mask": [
+      37500,
+      55
+    ],
+    "y_train": [
+      37500
+    ],
+    "X_val_bin": [
+      9376,
+      55
+    ],
+    "X_val_offset": [
+      9376,
+      55
+    ],
+    "X_val_continuous": [
+      9376,
+      55
+    ],
+    "X_val_mask": [
+      9376,
+      55
+    ],
+    "y_val": [
+      9376
+    ]
+  },
+  "torch_version": "2.10.0+cu128",
+  "gated_adaptive_hard_negative": {
+    "enabled": true,
+    "temperature": 1.0,
+    "gate_temperature": 1.0,
+    "scope": "all",
+    "gate_loss_weight": 1.0,
+    "uses_fixed_hard_pairs": false,
+    "uses_l3_or_family_labels_for_training": false,
+    "uses_validation_to_select_pairs": false,
+    "uses_fixed_margin": false,
+    "hardneg_scale": "learned difficulty gate from CLS; gate detached when scaling hardneg loss",
+    "note": "CE + gate_detached(x)*adaptive_hardneg + gate_loss_weight*BCE(gate(x), stopgrad(sigmoid(max_wrong_logit-true_logit)))."
+  },
+  "embedding_runtime_diagnostics": {
+    "n_rows_checked": 2048,
+    "has_local_interp": true,
+    "embedding_class": "D3InterpRawFiLMEmbedding",
+    "offset_mean": 0.24093098938465118,
+    "offset_std": 0.30861008167266846,
+    "continuous_mean": 0.3133985698223114,
+    "continuous_std": 0.34906554222106934,
+    "continuous_mask_mean": 0.9999999403953552,
+    "bin_embedding_num_embeddings": 513,
+    "bin_embedding_dim": 32,
+    "bin_embedding_weight_std": 0.02021166682243347,
+    "local_abs_mean": 0.014444543980062008,
+    "local_std": 0.018301276490092278,
+    "local_l2_mean_per_cell": 0.10192164778709412,
+    "last_bin_offset_sensitivity_l2": 0.1304578334093094,
+    "last_bin_boundary_collapse_fixed": true,
+    "continuous_abs_mean_over_local_abs_mean": 21.69667455441304,
+    "film_gamma_abs_mean": 0.02531667798757553,
+    "film_beta_abs_mean": 0.023931974545121193,
+    "film_gate_mean": 0.4999999701976776,
+    "film_delta_l2_mean_per_cell": 0.08591756224632263,
+    "film_delta_over_local_l2_mean": 0.8429765816364871
+  },
+  "sam": {
+    "sam_rho": 0.0,
+    "sam_adaptive": false,
+    "sam_eps": 1e-12,
+    "enabled": false
+  }
+}

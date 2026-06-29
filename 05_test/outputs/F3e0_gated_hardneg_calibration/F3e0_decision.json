@@ -1,0 +1,38 @@
+{
+  "official_validation_used": false,
+  "uses_fixed_hard_pairs": false,
+  "uses_l3_or_family_labels_for_training": false,
+  "uses_fixed_margin": false,
+  "baseline_row": {
+    "best_epoch": 57,
+    "train_macro_f1": 0.8923927747673076,
+    "calibration_macro_f1": 0.7788300852027513,
+    "train_weighted_f1": 0.928533585710808,
+    "calibration_weighted_f1": 0.8525664470603617,
+    "train_accuracy": NaN,
+    "calibration_accuracy": NaN,
+    "train_loss": 0.2483447092755635,
+    "calibration_loss": 0.6459252669542723,
+    "gap_train_minus_calibration_macro_f1": 0.11356268956455629,
+    "run_name": "baseline_ce",
+    "gahn_enabled": false,
+    "run_dir": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/config_runs/Keff512/baseline_ce"
+  },
+  "gated_row": {
+    "best_epoch": 67,
+    "train_macro_f1": 0.9057196646466096,
+    "calibration_macro_f1": 0.7775327736739271,
+    "train_weighted_f1": 0.9373272945826964,
+    "calibration_weighted_f1": 0.8519090103822188,
+    "train_accuracy": NaN,
+    "calibration_accuracy": NaN,
+    "train_loss": 0.2267430039532979,
+    "calibration_loss": 0.6742453414425508,
+    "gap_train_minus_calibration_macro_f1": 0.12818689097268243,
+    "run_name": "gated_adaptive_hardneg",
+    "gahn_enabled": true,
+    "run_dir": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/config_runs/Keff512/gated_adaptive_hardneg"
+  },
+  "delta_gated_minus_baseline_calibration_macro_f1": -0.0012973115288241743,
+  "recommendation": "reject_gated_hardneg"
+}

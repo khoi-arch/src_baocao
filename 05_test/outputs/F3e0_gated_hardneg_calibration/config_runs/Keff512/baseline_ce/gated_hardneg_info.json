@@ -1,0 +1,13 @@
+{
+  "enabled": false,
+  "temperature": 1.0,
+  "gate_temperature": 1.0,
+  "scope": "all",
+  "gate_loss_weight": 1.0,
+  "uses_fixed_hard_pairs": false,
+  "uses_l3_or_family_labels_for_training": false,
+  "uses_validation_to_select_pairs": false,
+  "uses_fixed_margin": false,
+  "hardneg_scale": "learned difficulty gate from CLS; gate detached when scaling hardneg loss",
+  "note": "CE + gate_detached(x)*adaptive_hardneg + gate_loss_weight*BCE(gate(x), stopgrad(sigmoid(max_wrong_logit-true_logit)))."
+}

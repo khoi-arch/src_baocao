@@ -1,0 +1,28 @@
+{
+  "experiment": "F3e0_gated_adaptive_hard_negative_calibration",
+  "official_validation_used": false,
+  "uses_fixed_hard_pairs": false,
+  "uses_l3_or_family_labels_for_training": false,
+  "uses_fixed_margin": false,
+  "method": "CE + detached_gate(CLS) * adaptive_hardneg + BCE(gate(CLS), stopgrad(hardness_target))",
+  "configs": [
+    "baseline_CE",
+    "gated_adaptive_hardneg"
+  ],
+  "gahn_temperature": 1.0,
+  "gahn_gate_temperature": 1.0,
+  "gahn_scope": "all",
+  "gahn_gate_loss_weight": 1.0,
+  "split_info": {
+    "split_mode": "L2_plus_L3_for_split_balance_only",
+    "calib_size": 0.2,
+    "seed": 42,
+    "n_train_inner": 37500,
+    "n_calibration": 9376,
+    "note": "L3 only for balanced split; not used by F3e training loss."
+  },
+  "dataset_subset_npz": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/dataset_train_inner_calibration.npz",
+  "train_inner_raw": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/train_inner_raw.csv",
+  "calibration_raw": "/kaggle/working/src_baocao/05_test/outputs/F3e0_gated_hardneg_calibration/_split_artifacts/calibration_raw.csv",
+  "trainer": "/kaggle/working/src_baocao/02_src/07_train_gated_hardneg.py"
+}

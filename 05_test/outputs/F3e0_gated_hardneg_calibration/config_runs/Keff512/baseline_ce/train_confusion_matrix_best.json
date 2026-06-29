@@ -1,0 +1,35 @@
+{
+  "labels": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "matrix": [
+    [
+      18749,
+      0,
+      1,
+      0
+    ],
+    [
+      0,
+      5432,
+      517,
+      317
+    ],
+    [
+      0,
+      187,
+      5909,
+      316
+    ],
+    [
+      0,
+      915,
+      411,
+      4746
+    ]
+  ],
+  "note": "rows=true labels, columns=predicted labels"
+}

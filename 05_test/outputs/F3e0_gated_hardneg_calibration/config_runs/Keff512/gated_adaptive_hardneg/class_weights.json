@@ -1,0 +1,27 @@
+{
+  "use_class_weights": true,
+  "class_weights": [
+    0.5,
+    1.4961698055267334,
+    1.4621022939682007,
+    1.543972373008728
+  ],
+  "label_names": [
+    "Benign",
+    "Ransomware",
+    "Spyware",
+    "Trojan"
+  ],
+  "train_counts": [
+    18750,
+    6266,
+    6412,
+    6072
+  ],
+  "val_counts": [
+    4688,
+    1566,
+    1604,
+    1518
+  ]
+}
