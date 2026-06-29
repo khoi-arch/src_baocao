@@ -1,0 +1,10 @@
+{
+  "fold_id": 0,
+  "oof_n": 9376,
+  "inner_train_n": 31875,
+  "inner_val_n": 5625,
+  "train_pool_n": 37500,
+  "oof_accuracy": 0.8551621160409556,
+  "oof_macro_f1": 0.781890912223131,
+  "oof_weighted_f1": 0.8546160258116394
+}

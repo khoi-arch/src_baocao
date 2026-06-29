@@ -1,0 +1,53 @@
+{
+  "experiment": "F3a1_one_clean_oof_fold_train_export",
+  "training_performed": true,
+  "official_validation_used": false,
+  "outer_fold_used_for_training": false,
+  "outer_fold_used_for_early_stopping": false,
+  "fold_id": 0,
+  "protocol": "outer fold is pure OOF holdout; inner_val from train_pool is used for early stopping",
+  "fold_assignments": "/kaggle/working/src_baocao/05_test/outputs/F3a0_oof_fold_split_audit/F3a0_oof_fold_assignments.csv",
+  "dataset_npz": "/kaggle/working/src_baocao/03_outputs/05_dataset/dataset.npz",
+  "metadata_json": "/kaggle/working/src_baocao/03_outputs/05_dataset/metadata.json",
+  "train_raw": "/kaggle/working/src_baocao/01_split/train_raw.csv",
+  "trainer": "/kaggle/working/src_baocao/02_src/07_train_sam.py",
+  "model_dir": "/kaggle/working/src_baocao/05_test/outputs/F3a1_oof_fold0_train_export/fold_runs/Keff512/fold_0_innertrain",
+  "inner_split_info": {
+    "inner_stratification_mode": "L2_plus_L3",
+    "inner_val_frac": 0.15,
+    "inner_train_n": 31875,
+    "inner_val_n": 5625,
+    "inner_seed": 42,
+    "min_combo_count_train_pool": 903
+  },
+  "metrics": {
+    "fold_id": 0,
+    "oof_n": 9376,
+    "inner_train_n": 31875,
+    "inner_val_n": 5625,
+    "train_pool_n": 37500,
+    "oof_accuracy": 0.8551621160409556,
+    "oof_macro_f1": 0.781890912223131,
+    "oof_weighted_f1": 0.8546160258116394
+  },
+  "export_info": {
+    "continuous_info": {
+      "source": "raw_scaled",
+      "train_path": "/kaggle/working/src_baocao/05_test/outputs/F3a1_oof_fold0_train_export/_fold_artifacts/fold0_export_oof_train_raw.csv",
+      "val_path": "/kaggle/working/src_baocao/05_test/outputs/F3a1_oof_fold0_train_export/_fold_artifacts/fold0_export_oof_val_raw.csv",
+      "scale": "train_only_minmax_linear_clip_val",
+      "n_constant_features": 3,
+      "constant_features": [
+        "pslist.nprocs64bit",
+        "handles.nport",
+        "svcscan.interactive_process_services"
+      ],
+      "train_min": 0.0,
+      "train_max": 1.0,
+      "val_min": 0.0,
+      "val_max": 1.0
+    },
+    "missing": [],
+    "unexpected": []
+  }
+}
