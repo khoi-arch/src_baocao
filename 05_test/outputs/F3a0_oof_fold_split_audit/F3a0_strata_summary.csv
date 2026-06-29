@@ -1,0 +1,17 @@
+stratum,count
+Spyware::Spyware-TIBS,1128
+Trojan::Trojan-Reconyc,1256
+Ransomware::Ransomware-Pysa,1374
+Trojan::Trojan-Zeus,1560
+Ransomware::Ransomware-Maze,1566
+Trojan::Trojan-Emotet,1574
+Ransomware::Ransomware-Conti,1590
+Trojan::Trojan-Scar,1600
+Spyware::Spyware-180solutions,1600
+Spyware::Spyware-CWS,1600
+Ransomware::Ransomware-Ako,1600
+Trojan::Trojan-Refroso,1600
+Ransomware::Ransomware-Shade,1702
+Spyware::Spyware-Gator,1760
+Spyware::Spyware-Transponder,1928
+Benign::Benign,23438

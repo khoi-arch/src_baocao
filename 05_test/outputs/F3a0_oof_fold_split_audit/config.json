@@ -1,0 +1,27 @@
+{
+  "experiment": "F3a0_oof_fold_split_audit",
+  "training_performed": false,
+  "purpose": "Create deterministic train-only K-fold assignments for later OOF overlap audit.",
+  "train_raw": "/kaggle/working/src_baocao/01_split/train_raw.csv",
+  "dataset_npz": "/kaggle/working/src_baocao/03_outputs/05_dataset/dataset.npz",
+  "n_rows": 46876,
+  "dataset_y_train_len": 46876,
+  "n_splits": 5,
+  "seed": 42,
+  "l2_col": "label_L2",
+  "l3_col": "label_L3",
+  "stratification_mode": "L2_plus_L3",
+  "fold_sizes": {
+    "0": 9376,
+    "1": 9375,
+    "2": 9375,
+    "3": 9375,
+    "4": 9375
+  },
+  "min_fold_size": 9375,
+  "max_fold_size": 9376,
+  "max_abs_l2_pct_diff": 0.00012435190715931466,
+  "max_abs_l3_pct_diff": 8.604602212930468e-05,
+  "row_id_unique": true,
+  "all_rows_assigned_once": true
+}
